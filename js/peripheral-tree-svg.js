@@ -3,8 +3,9 @@
  * 100% Anatomically Calibrated from Preston & Shapiro 4th Ed, Neumann Appendix II Part B, and Perotto 5th Ed.
  * Features:
  * - Proximodistal anatomical compartment bands (Axilla -> Arm -> Elbow -> Forearm -> Wrist -> Hand)
- * - Color-coded nodes: Motor (Emerald Green), Sensory (Amber Gold), Entrapment Landmarks (Crimson Hazard Pin)
- * - Interactive Entrapment Click-to-Simulate: Highlights Spared (Normal) vs Involved (Denervated) branches
+ * - 2-Line High-Contrast Node Layout: Completely prevents text overlap on mobile and desktop
+ * - High-Yield Entrapment Simulation: Explicitly labels branches as 🔴 DENERVATED vs 🟢 SPARED (NORMAL)
+ * - Touch & Click Optimized: Large tap targets + Quick Lesion Pills toolbar for seamless mobile experience
  * - Dynamic Thai PM&R Mnemonic & Clinical Sparing Pearls
  */
 
@@ -41,11 +42,6 @@ class PeripheralTreeVisualizer {
   clearLesion() {
     this.activeLesion = null;
     this.render();
-  }
-
-  selectBranch(branchId) {
-    this.activeBranch = branchId;
-    this.updateBranchDetailCard();
   }
 
   render() {
@@ -162,6 +158,7 @@ class PeripheralTreeVisualizer {
     const svgMarkup = this.getNerveSvgMarkup(this.currentNerve);
     const mnemonicData = this.getMnemonicBreakdown(this.currentNerve);
     const lesionInfo = this.getLesionInfo(this.currentNerve, this.activeLesion);
+    const quickLesionOptions = this.getQuickLesionsForNerve(this.currentNerve);
 
     let html = `
       <div class="peripheral-toolbar">
@@ -170,12 +167,39 @@ class PeripheralTreeVisualizer {
           <button class="btn btn-sm" id="btn-toggle-table">📋 Detailed Clinical Guide & Perotto Cards</button>
         </div>
         <div class="peripheral-legend">
-          <span class="legend-tag motor"><span class="dot" style="background:#10b981;"></span> Motor Branch</span>
-          <span class="legend-tag sensory"><span class="dot" style="background:#f59e0b;"></span> Sensory Branch</span>
-          <span class="legend-tag entrapment"><span class="dot" style="background:#ef4444;"></span> Entrapment Site (Click to Simulate)</span>
-          ${this.activeLesion ? `<button class="btn btn-xs btn-outline-danger" id="btn-tree-clear-lesion">✕ Clear Lesion / Normal View</button>` : ''}
+          <span class="legend-tag motor"><span class="dot" style="background:#10b981;"></span> Motor</span>
+          <span class="legend-tag sensory"><span class="dot" style="background:#f59e0b;"></span> Sensory</span>
+          <span class="legend-tag entrapment"><span class="dot" style="background:#ef4444;"></span> Entrapment Pin</span>
         </div>
       </div>
+
+      <!-- Quick Mobile-Friendly Lesion Simulation Pills Bar -->
+      <div class="quick-lesion-bar">
+        <span class="quick-lesion-label">⚡ SIMULATE LESION AT:</span>
+        <div class="quick-lesion-pills">
+          <button class="lesion-pill-btn ${!this.activeLesion ? 'active-normal' : ''}" data-lesion="">
+            🟢 Normal Anatomy
+          </button>
+          ${quickLesionOptions.map(opt => `
+            <button class="lesion-pill-btn ${this.activeLesion === opt.id ? 'active-lesion' : ''}" data-lesion="${opt.id}">
+              🔴 ${opt.title}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      ${this.activeLesion ? `
+        <div class="active-lesion-callout-banner">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span style="font-size:18px;">🛑</span>
+            <div>
+              <strong style="color:#fca5a5; font-size:14px;">ACTIVE LESION SIMULATION: ${lesionInfo.title}</strong>
+              <div style="font-size:12px; color:#cbd5e1;">เส้นประสาทด้านล่างรอยโรคถูกทำเครื่องหมายเป็น <span style="color:#f87171; font-weight:800;">🔴 DENERVATED</span> และด้านบนเป็น <span style="color:#34d399; font-weight:800;">🟢 SPARED</span></div>
+            </div>
+          </div>
+          <button class="btn btn-xs btn-outline-danger" id="btn-banner-clear-lesion">✕ Reset to Normal View</button>
+        </div>
+      ` : ''}
 
       <div class="visual-tree-layout">
         <!-- Left: Interactive SVG Diagram Canvas -->
@@ -185,9 +209,15 @@ class PeripheralTreeVisualizer {
               <span class="tree-title">${data.name} Visual Stem Diagram</span>
               <span class="tree-subtitle">Proximodistal Branching & Entrapment Hierarchy (Preston & Shapiro 4th Ed.)</span>
             </div>
-            <span class="badge ${this.activeLesion ? 'badge-amber' : 'badge-teal'}">
-              ${this.activeLesion ? '⚡ LESION ACTIVE: ' + this.getLesionName(this.activeLesion) : '🟢 Normal Anatomy'}
-            </span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="badge ${this.activeLesion ? 'badge-amber' : 'badge-teal'}">
+                ${this.activeLesion ? '⚡ LESION: ' + this.getLesionName(this.activeLesion) : '🟢 Normal Anatomy'}
+              </span>
+            </div>
+          </div>
+
+          <div class="mobile-scroll-indicator">
+            <span>↔️ ปัดซ้าย-ขวาเพื่อเลื่อนดูแผนภาพกายวิภาคฉบับเต็ม</span>
           </div>
 
           <div class="tree-svg-wrapper">
@@ -254,10 +284,10 @@ class PeripheralTreeVisualizer {
               </div>
             ` : `
               <div class="lesion-placeholder">
-                <p>💡 <strong>วิธีใช้งาน:</strong> คลิกที่ <strong>ไอคอนหมุดสีแดง (🔴 Entrapment Sites)</strong> บนแผนภาพกิ่งประสาททางซ้าย เพื่อจำลองรอยโรค ณ ตำแหน่งนั้นทันที:</p>
+                <p>💡 <strong>วิธีใช้งาน:</strong> กดที่แถบปุ่ม <strong>🔴 SIMULATE LESION</strong> ด้านบน หรือแตะที่ <strong>หมุดสีแดง (⚠️ Entrapment Sites)</strong> บนแผนภาพ:</p>
                 <ul style="padding-left: 18px; margin-top: 8px; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
-                  <li>ระบบจะระบายสีเขียว (🟢) ให้กับกล้ามเนื้อและแขนงที่ <strong>Spared (ปกติ)</strong></li>
-                  <li>ระบบจะระบายสีแดง (🔴) ให้กับกล้ามเนื้อที่ <strong>Involved (อ่อนแรง/Denervated)</strong></li>
+                  <li>กล้ามเนื้อที่อ่อนแรงหรือเสียการทำงานจะถูกเปลี่ยนเป็น <strong style="color:#f87171;">🔴 DENERVATED</strong></li>
+                  <li>กล้ามเนื้อที่รอดพ้นจะถูกเปลี่ยนเป็น <strong style="color:#34d399;">🟢 SPARED (NORMAL)</strong></li>
                   <li>วิเคราะห์การแยกโรคด้วย <strong>Needle EMG & NCS (SNAP Sparing)</strong> โดยอัตโนมัติ</li>
                 </ul>
               </div>
@@ -287,30 +317,51 @@ class PeripheralTreeVisualizer {
     if (btnVisual) btnVisual.addEventListener('click', () => this.setViewMode('visual'));
     if (btnTable) btnTable.addEventListener('click', () => this.setViewMode('table'));
 
-    const clearLesionBtn = document.getElementById('btn-tree-clear-lesion');
-    if (clearLesionBtn) clearLesionBtn.addEventListener('click', () => this.clearLesion());
+    const bannerClearBtn = document.getElementById('btn-banner-clear-lesion');
+    if (bannerClearBtn) bannerClearBtn.addEventListener('click', () => this.clearLesion());
+
+    // Bind Quick Lesion Pills
+    const lesionPillBtns = this.container.querySelectorAll('.lesion-pill-btn');
+    lesionPillBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const lesionId = btn.getAttribute('data-lesion');
+        if (!lesionId) {
+          this.clearLesion();
+        } else {
+          this.simulateLesion(lesionId);
+        }
+      });
+    });
   }
 
   bindSvgInteractions() {
+    // Entrapment pin clicks / touch
     const pins = this.container.querySelectorAll('.svg-entrapment-pin');
     pins.forEach(pin => {
-      pin.addEventListener('click', (e) => {
+      const handleTrigger = (e) => {
+        e.preventDefault();
         e.stopPropagation();
         const lesionId = pin.getAttribute('data-lesion');
         this.simulateLesion(lesionId);
-      });
+      };
+      pin.addEventListener('click', handleTrigger);
+      pin.addEventListener('touchend', handleTrigger);
     });
 
+    // Branch node clicks / touch
     const nodes = this.container.querySelectorAll('.svg-branch-node');
     nodes.forEach(node => {
-      node.addEventListener('click', (e) => {
+      const handleNode = (e) => {
         e.stopPropagation();
         const name = node.getAttribute('data-name');
         const roots = node.getAttribute('data-roots') || '';
         const desc = node.getAttribute('data-desc') || '';
         const type = node.getAttribute('data-type') || '';
         this.showBranchDetail(name, roots, desc, type);
-      });
+      };
+      node.addEventListener('click', handleNode);
+      node.addEventListener('touchend', handleNode);
     });
   }
 
@@ -325,6 +376,76 @@ class PeripheralTreeVisualizer {
       <div style="margin-top: 6px;">${desc}</div>
     `;
   }
+
+  getQuickLesionsForNerve(nerveKey) {
+    if (nerveKey === 'median') {
+      return [
+        { id: 'struthers', title: "Struthers' Ligament" },
+        { id: 'pronator', title: "Pronator Teres" },
+        { id: 'ain', title: "AIN (Kiloh-Nevin)" },
+        { id: 'cts', title: "Carpal Tunnel (CTS)" }
+      ];
+    }
+    if (nerveKey === 'radial') {
+      return [
+        { id: 'spiral-groove', title: "Spiral Groove (Saturday Night)" },
+        { id: 'frohse', title: "Arcade of Frohse (PIN)" },
+        { id: 'wartenberg', title: "Wartenberg's (Sensory)" }
+      ];
+    }
+    if (nerveKey === 'ulnar') {
+      return [
+        { id: 'cubital-tunnel', title: "Cubital Tunnel (Elbow)" },
+        { id: 'guyon-zone1', title: "Guyon's Canal (Zone 1)" },
+        { id: 'guyon-zone2', title: "Guyon's Zone 2 (Deep Motor)" },
+        { id: 'guyon-zone3', title: "Guyon's Zone 3 (Sensory)" }
+      ];
+    }
+    return [];
+  }
+
+  // =========================================================================
+  // HELPER FOR RENDERING HIGH-CONTRAST 2-LINE BRANCH NODES (NO OVERLAP)
+  // =========================================================================
+
+  renderNodeBox(x, y, width, height, title, subtitle, status, type = 'motor') {
+    const isDenervated = status === 'involved';
+    const isSpared = status === 'spared';
+
+    let boxClass = `node-box ${type}`;
+    let boxStroke = type === 'motor' ? '#10b981' : '#f59e0b';
+    let boxFill = type === 'motor' ? '#064e3b' : '#78350f';
+    let titleColor = '#ffffff';
+    let subColor = type === 'motor' ? '#34d399' : '#fbbf24';
+    let statusText = subtitle;
+
+    if (isDenervated) {
+      boxClass += ' status-involved';
+      boxStroke = '#ef4444';
+      boxFill = '#450a0a';
+      titleColor = '#fca5a5';
+      subColor = '#f87171';
+      statusText = `🔴 DENERVATED • ${subtitle}`;
+    } else if (isSpared) {
+      boxClass += ' status-spared';
+      boxStroke = '#10b981';
+      boxFill = '#064e3b';
+      titleColor = '#a7f3d0';
+      subColor = '#34d399';
+      statusText = `🟢 SPARED • ${subtitle}`;
+    }
+
+    return `
+      <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="7" class="${boxClass}" fill="${boxFill}" stroke="${boxStroke}" stroke-width="${isDenervated || isSpared ? '2.5' : '1.5'}"/>
+      ${isDenervated ? `<line x1="${x+12}" y1="${y + 19}" x2="${x + width - 12}" y2="${y + 19}" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,2"/>` : ''}
+      <text x="${x + 14}" y="${y + 20}" class="node-title-line" fill="${titleColor}" font-size="12.5" font-weight="700">${title}</text>
+      <text x="${x + 14}" y="${y + 38}" class="node-sub-line" fill="${subColor}" font-size="10.5" font-weight="${isDenervated || isSpared ? '800' : '600'}">${statusText}</text>
+    `;
+  }
+
+  // =========================================================================
+  // SVG SCHEMATICS FOR MEDIAN, RADIAL, AND ULNAR
+  // =========================================================================
 
   getNerveSvgMarkup(nerveKey) {
     if (nerveKey === 'median') return this.getMedianSvg();
@@ -341,237 +462,198 @@ class PeripheralTreeVisualizer {
     const isAIN = isLesion === 'ain';
     const isCTS = isLesion === 'cts';
 
-    const getNodeClass = (nodeLevel, specificNerve) => {
-      if (!isLesion) return '';
-      if (isStruthers) return 'status-involved';
+    const getStatus = (nodeLevel, specificNerve) => {
+      if (!isLesion) return 'normal';
+      if (isStruthers) return 'involved';
       if (isPT) {
-        if (nodeLevel === 'arm') return 'status-spared';
-        if (specificNerve === 'pt') return 'status-involved';
-        return 'status-involved';
+        if (nodeLevel === 'arm') return 'spared';
+        return 'involved';
       }
       if (isAIN) {
-        if (specificNerve === 'ain-group') return 'status-involved';
-        return 'status-spared';
+        if (specificNerve === 'ain-group') return 'involved';
+        return 'spared';
       }
       if (isCTS) {
-        if (specificNerve === 'palmar-cutaneous') return 'status-spared';
-        if (nodeLevel === 'hand') return 'status-involved';
-        return 'status-spared';
+        if (specificNerve === 'palmar-cutaneous') return 'spared'; // CRUCIAL SPARING!
+        if (nodeLevel === 'hand') return 'involved';
+        return 'spared';
       }
-      return '';
+      return 'normal';
     };
 
     return `
-      <svg viewBox="0 0 760 1160" class="peripheral-stem-svg" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 880 1260" class="peripheral-stem-svg" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="medianStemGrad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stop-color="#10b981"/>
             <stop offset="50%" stop-color="#14b8a6"/>
             <stop offset="100%" stop-color="#06b6d4"/>
           </linearGradient>
-          <filter id="glowGreen" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur"/>
-            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
-          </filter>
         </defs>
 
+        <!-- Compartment Background Bands -->
         <g class="compartment-bands">
-          <rect x="20" y="20" width="720" height="200" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
+          <!-- Axilla & Arm -->
+          <rect x="20" y="20" width="840" height="210" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
           <text x="35" y="45" class="comp-label">AXILLA & ARM (BRACHIUM)</text>
-          <text x="720" y="45" class="comp-sub" text-anchor="end">No muscular branches in arm</text>
+          <text x="840" y="45" class="comp-sub" text-anchor="end">No muscular branches in arm</text>
 
-          <rect x="20" y="230" width="720" height="340" rx="8" fill="rgba(13, 148, 136, 0.05)" stroke="rgba(45, 212, 191, 0.15)"/>
-          <text x="35" y="255" class="comp-label">ELBOW & PROXIMAL FOREARM</text>
-          <text x="720" y="255" class="comp-sub" text-anchor="end">Main Trunk Forearm Flexors + AIN</text>
+          <!-- Elbow & Cubital Fossa -->
+          <rect x="20" y="240" width="840" height="380" rx="8" fill="rgba(13, 148, 136, 0.05)" stroke="rgba(45, 212, 191, 0.15)"/>
+          <text x="35" y="265" class="comp-label">ELBOW & PROXIMAL FOREARM</text>
+          <text x="840" y="265" class="comp-sub" text-anchor="end">Main Trunk Forearm Flexors + AIN</text>
 
-          <rect x="20" y="580" width="720" height="220" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
-          <text x="35" y="605" class="comp-label">DISTAL FOREARM (PRE-WRIST)</text>
-          <text x="720" y="605" class="comp-sub" text-anchor="end">5-6 cm proximal to wrist crease</text>
+          <!-- Distal Forearm -->
+          <rect x="20" y="630" width="840" height="220" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
+          <text x="35" y="655" class="comp-label">DISTAL FOREARM (PRE-WRIST)</text>
+          <text x="840" y="655" class="comp-sub" text-anchor="end">5-6 cm proximal to wrist crease</text>
 
-          <rect x="20" y="810" width="720" height="330" rx="8" fill="rgba(245, 158, 11, 0.04)" stroke="rgba(245, 158, 11, 0.2)"/>
-          <text x="35" y="835" class="comp-label">CARPAL TUNNEL & HAND (THENAR)</text>
-          <text x="720" y="835" class="comp-sub" text-anchor="end">Under Transverse Carpal Ligament</text>
+          <!-- Carpal Tunnel & Hand -->
+          <rect x="20" y="860" width="840" height="380" rx="8" fill="rgba(245, 158, 11, 0.04)" stroke="rgba(245, 158, 11, 0.2)"/>
+          <text x="35" y="885" class="comp-label">CARPAL TUNNEL & HAND (THENAR)</text>
+          <text x="840" y="885" class="comp-sub" text-anchor="end">Under Transverse Carpal Ligament</text>
         </g>
 
+        <!-- Spinal Roots Origin (Top Convergence) -->
         <g class="roots-convergence">
-          <text x="380" y="45" text-anchor="middle" class="svg-header-roots">MEDIAN NERVE (C5, C6, C7, C8, T1)</text>
-          <path d="M 280 60 Q 380 90 380 120" stroke="#10b981" stroke-width="2.5" fill="none"/>
-          <path d="M 330 60 Q 380 90 380 120" stroke="#10b981" stroke-width="2.5" fill="none"/>
-          <path d="M 380 60 L 380 120" stroke="#10b981" stroke-width="4" fill="none"/>
-          <path d="M 430 60 Q 380 90 380 120" stroke="#10b981" stroke-width="2.5" fill="none"/>
-          <path d="M 480 60 Q 380 90 380 120" stroke="#10b981" stroke-width="2.5" fill="none"/>
+          <text x="440" y="45" text-anchor="middle" class="svg-header-roots">MEDIAN NERVE (C5, C6, C7, C8, T1)</text>
+          <path d="M 340 60 Q 440 90 440 120" stroke="#10b981" stroke-width="2.5" fill="none"/>
+          <path d="M 390 60 Q 440 90 440 120" stroke="#10b981" stroke-width="2.5" fill="none"/>
+          <path d="M 440 60 L 440 120" stroke="#10b981" stroke-width="4.5" fill="none"/>
+          <path d="M 490 60 Q 440 90 440 120" stroke="#10b981" stroke-width="2.5" fill="none"/>
+          <path d="M 540 60 Q 440 90 440 120" stroke="#10b981" stroke-width="2.5" fill="none"/>
 
-          <circle cx="280" cy="60" r="4" fill="#10b981"/>
-          <circle cx="330" cy="60" r="4" fill="#10b981"/>
-          <circle cx="380" cy="60" r="5" fill="#10b981"/>
-          <circle cx="430" cy="60" r="4" fill="#10b981"/>
-          <circle cx="480" cy="60" r="4" fill="#10b981"/>
-          <text x="280" y="52" class="root-dot-lbl" text-anchor="middle">C5</text>
-          <text x="330" y="52" class="root-dot-lbl" text-anchor="middle">C6</text>
-          <text x="380" y="52" class="root-dot-lbl" text-anchor="middle">C7</text>
-          <text x="430" y="52" class="root-dot-lbl" text-anchor="middle">C8</text>
-          <text x="480" y="52" class="root-dot-lbl" text-anchor="middle">T1</text>
+          <circle cx="340" cy="60" r="4" fill="#10b981"/>
+          <circle cx="390" cy="60" r="4" fill="#10b981"/>
+          <circle cx="440" cy="60" r="5" fill="#10b981"/>
+          <circle cx="490" cy="60" r="4" fill="#10b981"/>
+          <circle cx="540" cy="60" r="4" fill="#10b981"/>
+          <text x="340" y="52" class="root-dot-lbl" text-anchor="middle">C5</text>
+          <text x="390" y="52" class="root-dot-lbl" text-anchor="middle">C6</text>
+          <text x="440" y="52" class="root-dot-lbl" text-anchor="middle">C7</text>
+          <text x="490" y="52" class="root-dot-lbl" text-anchor="middle">C8</text>
+          <text x="540" y="52" class="root-dot-lbl" text-anchor="middle">T1</text>
         </g>
 
-        <path d="M 380 120 L 380 820" stroke="url(#medianStemGrad)" stroke-width="8" stroke-linecap="round" fill="none" filter="url(#glowGreen)"/>
+        <!-- Main Vertical Stem -->
+        <path d="M 440 120 L 440 880" stroke="url(#medianStemGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
 
         <!-- Vascular branch -->
-        <path d="M 380 140 C 340 140, 310 155, 270 155" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-dasharray="3,3"/>
+        <path d="M 440 145 C 380 145, 340 155, 300 155" stroke="#0ea5e9" stroke-width="2" fill="none" stroke-dasharray="3,3"/>
         <g class="svg-branch-node" data-name="Arterial Branch" data-desc="Vascular vasomotor fibers to brachial artery" data-type="sensory">
-          <rect x="150" y="140" width="120" height="30" rx="6" class="node-box autonomic"/>
-          <text x="210" y="160" text-anchor="middle" class="node-txt">To Brachial Artery</text>
+          <rect x="160" y="135" width="140" height="38" rx="6" class="node-box autonomic"/>
+          <text x="230" y="158" text-anchor="middle" class="node-title-line" font-size="11.5">To Brachial Artery</text>
         </g>
 
         <!-- Entrapment Pin 1: Struthers -->
-        <g class="svg-entrapment-pin ${isStruthers ? 'active' : ''}" data-lesion="struthers" transform="translate(380, 185)">
-          <circle cx="0" cy="0" r="14" class="pin-halo"/>
-          <circle cx="0" cy="0" r="9" class="pin-core"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <rect x="25" y="-12" width="220" height="24" rx="4" class="pin-badge-box"/>
-          <text x="35" y="4" class="pin-label">Ligament of Struthers (5cm > Med. Epicondyle)</text>
+        <g class="svg-entrapment-pin ${isStruthers ? 'active' : ''}" data-lesion="struthers" transform="translate(440, 190)">
+          <rect x="-155" y="-18" width="310" height="36" rx="18" class="pin-pill-box" fill="${isStruthers ? '#ef4444' : 'rgba(239, 68, 68, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="11.5" font-weight="800">⚠️ Struthers' Ligament (5cm > Med. Epicondyle)</text>
         </g>
 
         <!-- Entrapment Pin 2: Pronator Teres Syndrome -->
-        <g class="svg-entrapment-pin ${isPT ? 'active' : ''}" data-lesion="pronator" transform="translate(380, 275)">
-          <circle cx="0" cy="0" r="14" class="pin-halo"/>
-          <circle cx="0" cy="0" r="9" class="pin-core"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <rect x="-240" y="-12" width="220" height="24" rx="4" class="pin-badge-box"/>
-          <text x="-130" y="4" class="pin-label" text-anchor="middle">Pronator Teres Syndrome (2 heads)</text>
+        <g class="svg-entrapment-pin ${isPT ? 'active' : ''}" data-lesion="pronator" transform="translate(440, 290)">
+          <rect x="-155" y="-18" width="310" height="36" rx="18" class="pin-pill-box" fill="${isPT ? '#ef4444' : 'rgba(239, 68, 68, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="11.5" font-weight="800">⚠️ Pronator Teres Syndrome (PT 2 heads)</text>
         </g>
 
         <!-- Right Side: Main Trunk Muscles (โปร - ขอ - ปาล์ม - ดี) -->
-        <path d="M 380 295 C 430 295, 460 305, 500 305" stroke="#10b981" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('elbow', 'pt')}" data-name="Pronator Teres (PT)" data-roots="C6, C7" data-desc="Humeral & ulnar heads. Primary forearm pronator. Key test: Spared in AIN and CTS, weak in Struthers/Upper trunk." data-type="motor">
-          <rect x="500" y="288" width="220" height="34" rx="6" class="node-box motor"/>
-          <text x="515" y="310" class="node-title">🥩 Pronator Teres (PT)</text>
-          <text x="705" y="310" class="node-mnemonic" text-anchor="end">โปร [C6-C7]</text>
+        <!-- 1. PT (โปร) -->
+        <path d="M 440 340 C 480 340, 500 340, 530 340" stroke="#10b981" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Pronator Teres (PT)" data-roots="C6, C7" data-desc="Humeral & ulnar heads. Primary forearm pronator. Key test: Spared in AIN and CTS, weak in Struthers/Upper trunk." data-type="motor">
+          ${this.renderNodeBox(530, 315, 310, 48, "🥩 Pronator Teres (PT)", "สูตรจำ: โปร • Major Roots: C6-C7", getStatus('elbow', 'pt'))}
         </g>
 
-        <path d="M 380 340 C 430 340, 460 350, 500 350" stroke="#10b981" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('elbow', 'fcr')}" data-name="Flexor Carpi Radialis (FCR)" data-roots="C6, C7" data-desc="Forearm wrist flexion with radial deviation. Standard C6-C7 needle EMG target." data-type="motor">
-          <rect x="500" y="333" width="220" height="34" rx="6" class="node-box motor"/>
-          <text x="515" y="355" class="node-title">🥩 Flexor Carpi Radialis (FCR)</text>
-          <text x="705" y="355" class="node-mnemonic" text-anchor="end">ขอ [C6-C7]</text>
+        <!-- 2. FCR (ขอ) -->
+        <path d="M 440 405 C 480 405, 500 405, 530 405" stroke="#10b981" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Flexor Carpi Radialis (FCR)" data-roots="C6, C7" data-desc="Forearm wrist flexion with radial deviation. Standard C6-C7 needle EMG target." data-type="motor">
+          ${this.renderNodeBox(530, 380, 310, 48, "🥩 Flexor Carpi Radialis (FCR)", "สูตรจำ: ขอ • Major Roots: C6-C7", getStatus('elbow', 'fcr'))}
         </g>
 
-        <path d="M 380 385 C 430 385, 460 395, 500 395" stroke="#10b981" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('elbow', 'pl')}" data-name="Palmaris Longus (PL)" data-roots="C7, C8" data-desc="Tenses palmar aponeurosis. Absent in ~14% of population." data-type="motor">
-          <rect x="500" y="378" width="220" height="34" rx="6" class="node-box motor"/>
-          <text x="515" y="400" class="node-title">🥩 Palmaris Longus (PL)</text>
-          <text x="705" y="400" class="node-mnemonic" text-anchor="end">ปาล์ม [C7-C8]</text>
+        <!-- 3. PL (ปาล์ม) -->
+        <path d="M 440 470 C 480 470, 500 470, 530 470" stroke="#10b981" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Palmaris Longus (PL)" data-roots="C7, C8" data-desc="Tenses palmar aponeurosis. Absent in ~14% of population." data-type="motor">
+          ${this.renderNodeBox(530, 445, 310, 48, "🥩 Palmaris Longus (PL)", "สูตรจำ: ปาล์ม • Major Roots: C7-C8", getStatus('elbow', 'pl'))}
         </g>
 
-        <path d="M 380 430 C 430 430, 460 440, 500 440" stroke="#10b981" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('elbow', 'fds')}" data-name="Flexor Digitorum Superficialis (FDS)" data-roots="C7, C8, T1" data-desc="Flexes PIP joints of digits 2-5. Innervated by multiple branches along forearm." data-type="motor">
-          <rect x="500" y="423" width="220" height="34" rx="6" class="node-box motor"/>
-          <text x="515" y="445" class="node-title">🥩 Flexor Digit. Superficialis (FDS)</text>
-          <text x="705" y="445" class="node-mnemonic" text-anchor="end">ดี [C7-T1]</text>
+        <!-- 4. FDS (ดี) -->
+        <path d="M 440 535 C 480 535, 500 535, 530 535" stroke="#10b981" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Flexor Digitorum Superficialis (FDS)" data-roots="C7, C8, T1" data-desc="Flexes PIP joints of digits 2-5. Innervated by multiple branches along forearm." data-type="motor">
+          ${this.renderNodeBox(530, 510, 310, 48, "🥩 Flexor Digit. Superficialis (FDS)", "สูตรจำ: ดี • Major Roots: C7, C8, T1", getStatus('elbow', 'fds'))}
         </g>
 
         <!-- Left Side: AIN Branch (Anterior Interosseous Nerve) -->
-        <path d="M 380 320 C 330 320, 290 350, 270 380 L 270 540" stroke="#a855f7" stroke-width="4.5" fill="none" stroke-dasharray="4,2"/>
+        <path d="M 440 330 C 370 330, 330 360, 330 400 L 330 580" stroke="#a855f7" stroke-width="4.5" fill="none" stroke-dasharray="4,2"/>
         
-        <g class="svg-entrapment-pin ${isAIN ? 'active' : ''}" data-lesion="ain" transform="translate(270, 375)">
-          <circle cx="0" cy="0" r="13" class="pin-halo"/>
-          <circle cx="0" cy="0" r="8" class="pin-core" fill="#a855f7"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <rect x="-220" y="-12" width="205" height="24" rx="4" class="pin-badge-box"/>
-          <text x="-120" y="4" class="pin-label" text-anchor="middle">AIN Syndrome (Kiloh-Nevin)</text>
+        <!-- Entrapment Pin 3: AIN Syndrome -->
+        <g class="svg-entrapment-pin ${isAIN ? 'active' : ''}" data-lesion="ain" transform="translate(190, 365)">
+          <rect x="-150" y="-18" width="300" height="36" rx="18" class="pin-pill-box" fill="${isAIN ? '#ef4444' : 'rgba(168, 85, 247, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="11.5" font-weight="800">⚠️ AIN Syndrome (Kiloh-Nevin)</text>
         </g>
 
-        <rect x="180" y="325" width="80" height="22" rx="4" fill="rgba(168, 85, 247, 0.2)" stroke="#a855f7"/>
-        <text x="220" y="340" text-anchor="middle" font-size="11" font-weight="800" fill="#c084fc">AIN BRANCH</text>
-
-        <path d="M 270 410 L 230 410" stroke="#a855f7" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('elbow', 'ain-group')}" data-name="FDP Lateral (Digits 2 & 3)" data-roots="C7, C8" data-desc="Flexes DIP joints of index and long fingers. Essential for OK sign." data-type="motor">
-          <rect x="40" y="395" width="190" height="32" rx="6" class="node-box motor" style="border-left: 3px solid #a855f7;"/>
-          <text x="50" y="415" class="node-title">🥩 FDP (Digits 2 & 3)</text>
-          <text x="220" y="415" class="node-mnemonic" text-anchor="end">ดี [C7-C8]</text>
+        <!-- AIN 1: FDP (lateral half) -->
+        <path d="M 330 425 L 310 425" stroke="#a855f7" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="FDP Lateral (Digits 2 & 3)" data-roots="C7, C8" data-desc="Flexes DIP joints of index and long fingers. Essential for OK sign." data-type="motor">
+          ${this.renderNodeBox(40, 400, 270, 48, "🥩 FDP (Digits 2 & 3)", "สูตรจำ: ดี (AIN) • Roots: C7-C8", getStatus('elbow', 'ain-group'))}
         </g>
 
-        <path d="M 270 460 L 230 460" stroke="#a855f7" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('elbow', 'ain-group')}" data-name="Flexor Pollicis Longus (FPL)" data-roots="C7, C8" data-desc="Flexes IP joint of thumb. Tested via pinch test. Characteristic loss of IP flexion in AIN palsy." data-type="motor">
-          <rect x="40" y="445" width="190" height="32" rx="6" class="node-box motor" style="border-left: 3px solid #a855f7;"/>
-          <text x="50" y="465" class="node-title">🥩 Flexor Pollicis Longus (FPL)</text>
-          <text x="220" y="465" class="node-mnemonic" text-anchor="end">โป้ง [C7-C8]</text>
+        <!-- AIN 2: FPL -->
+        <path d="M 330 490 L 310 490" stroke="#a855f7" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="Flexor Pollicis Longus (FPL)" data-roots="C7, C8" data-desc="Flexes IP joint of thumb. Tested via pinch test. Characteristic loss of IP flexion in AIN palsy." data-type="motor">
+          ${this.renderNodeBox(40, 465, 270, 48, "🥩 Flexor Pollicis Longus (FPL)", "สูตรจำ: โป้ง (AIN) • Roots: C7-C8", getStatus('elbow', 'ain-group'))}
         </g>
 
-        <path d="M 270 510 L 230 510" stroke="#a855f7" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('elbow', 'ain-group')}" data-name="Pronator Quadratus (PQ)" data-roots="C7, C8" data-desc="Deep pronator at distal wrist. Terminal muscle of AIN. Needle EMG tested with forearm fully pronated." data-type="motor">
-          <rect x="40" y="495" width="190" height="32" rx="6" class="node-box motor" style="border-left: 3px solid #a855f7;"/>
-          <text x="50" y="515" class="node-title">🥩 Pronator Quadratus (PQ)</text>
-          <text x="220" y="515" class="node-mnemonic" text-anchor="end">โป [C7-C8]</text>
+        <!-- AIN 3: Pronator Quadratus -->
+        <path d="M 330 555 L 310 555" stroke="#a855f7" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="Pronator Quadratus (PQ)" data-roots="C7, C8" data-desc="Deep pronator at distal wrist. Terminal muscle of AIN. Needle EMG tested with forearm fully pronated." data-type="motor">
+          ${this.renderNodeBox(40, 530, 270, 48, "🥩 Pronator Quadratus (PQ)", "สูตรจำ: โป (AIN) • Roots: C7-C8", getStatus('elbow', 'ain-group'))}
         </g>
 
-        <!-- Palmar Cutaneous Branch -->
-        <path d="M 380 640 C 330 640, 290 660, 240 660" stroke="#f59e0b" stroke-width="3" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('distal', 'palmar-cutaneous')}" data-name="Palmar Cutaneous Branch" data-roots="C6, C7" data-desc="Arises 5-6 cm proximal to wrist, passes SUPERFICIAL to carpal tunnel into thenar pad. CRUCIAL: Spared in Carpal Tunnel Syndrome! If numb, lesion is at or proximal to Pronator Teres." data-type="sensory">
-          <rect x="30" y="640" width="210" height="42" rx="6" class="node-box sensory" style="border: 2px solid #fbbf24;"/>
-          <text x="40" y="658" class="node-title" style="fill:#fef08a;">👁️ Palmar Cutaneous Branch</text>
-          <text x="40" y="674" class="node-sub" style="fill:#fde047;">⭐ SPARED IN CTS (Thenar pad)</text>
+        <!-- Palmar Cutaneous Branch (5-6 cm above wrist) -->
+        <path d="M 440 700 C 370 700, 310 720, 270 720" stroke="#f59e0b" stroke-width="3.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Palmar Cutaneous Branch" data-roots="C6, C7" data-desc="Arises 5-6 cm proximal to wrist, passes SUPERFICIAL to carpal tunnel into thenar pad. CRUCIAL: Spared in Carpal Tunnel Syndrome! If numb, lesion is at or proximal to Pronator Teres." data-type="sensory">
+          ${this.renderNodeBox(40, 695, 300, 52, "👁️ Palmar Cutaneous Branch", "⭐ SPARED IN CTS (Thenar Pad)", getStatus('distal', 'palmar-cutaneous'), 'sensory')}
         </g>
 
-        <text x="380" y="700" text-anchor="middle" font-size="11.5" fill="#fde047" font-weight="700">
-          ▲ Passes superficial to transverse carpal ligament (No tunnel entrapment)
+        <text x="440" y="775" text-anchor="middle" font-size="12" fill="#fde047" font-weight="700">
+          ▲ Passes superficial to transverse carpal ligament (No tunnel entrapment!)
         </text>
 
         <!-- Entrapment Pin 4: Carpal Tunnel Syndrome -->
-        <g class="svg-entrapment-pin ${isCTS ? 'active' : ''}" data-lesion="cts" transform="translate(380, 820)">
-          <rect x="-140" y="-14" width="280" height="28" rx="6" class="carpal-tunnel-band"/>
-          <circle cx="0" cy="0" r="14" class="pin-halo"/>
-          <circle cx="0" cy="0" r="9" class="pin-core"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <text x="0" y="32" class="pin-label-center" text-anchor="middle">Carpal Tunnel Syndrome (Transverse Carpal Ligament)</text>
+        <g class="svg-entrapment-pin ${isCTS ? 'active' : ''}" data-lesion="cts" transform="translate(440, 880)">
+          <rect x="-170" y="-18" width="340" height="36" rx="18" class="pin-pill-box" fill="${isCTS ? '#ef4444' : 'rgba(239, 68, 68, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">⚠️ Carpal Tunnel Syndrome (TCL Ligament)</text>
         </g>
 
-        <path d="M 380 840 L 380 890" stroke="#10b981" stroke-width="6" fill="none"/>
-        <path d="M 380 890 C 330 920, 280 940, 240 960" stroke="#10b981" stroke-width="3" fill="none"/>
-        <path d="M 380 890 C 430 920, 480 940, 520 960" stroke="#f59e0b" stroke-width="3" fill="none"/>
+        <!-- Terminal Bifurcation in Hand -->
+        <path d="M 440 900 L 440 940" stroke="#10b981" stroke-width="6" fill="none"/>
+        <path d="M 440 940 C 380 970, 330 990, 280 1010" stroke="#10b981" stroke-width="3" fill="none"/>
+        <path d="M 440 940 C 500 970, 560 990, 610 1010" stroke="#f59e0b" stroke-width="3" fill="none"/>
 
         <!-- RECURRENT THENAR MOTOR BRANCH (A-F-O) -->
-        <rect x="40" y="930" width="310" height="205" rx="8" class="hand-box-group"/>
-        <text x="55" y="952" class="hand-group-title">RECURRENT THENAR MOTOR BRANCH (A-F-O)</text>
-        <text x="55" y="968" class="comp-sub">Standard Median Motor CMAP recording site</text>
-
-        <g class="svg-branch-node ${getNodeClass('hand', 'apb')}" data-name="Abductor Pollicis Brevis (APB)" data-roots="C8, T1" data-desc="Primary muscle tested in Median motor NCS & Needle EMG. Palmar thumb abduction." data-type="motor">
-          <rect x="55" y="980" width="280" height="32" rx="5" class="node-box motor"/>
-          <text x="68" y="1001" class="node-title">🥩 Abductor Pollicis Brevis (APB)</text>
-          <text x="325" y="1001" class="node-mnemonic" text-anchor="end">A [C8-T1]</text>
+        <g class="svg-branch-node" data-name="Abductor Pollicis Brevis (APB)" data-roots="C8, T1" data-desc="Primary muscle tested in Median motor NCS & Needle EMG. Palmar thumb abduction." data-type="motor">
+          ${this.renderNodeBox(40, 970, 330, 48, "🥩 Abductor Pollicis Brevis (APB)", "สูตรจำ: A (AFO) • Major Roots: C8-T1", getStatus('hand', 'apb'))}
         </g>
 
-        <g class="svg-branch-node ${getNodeClass('hand', 'fpb')}" data-name="Flexor Pollicis Brevis (Superficial Head)" data-roots="C8, T1" data-desc="Flexes MCP of thumb. Deep head is innervated by ulnar nerve." data-type="motor">
-          <rect x="55" y="1020" width="280" height="32" rx="5" class="node-box motor"/>
-          <text x="68" y="1041" class="node-title">🥩 Flexor Pollicis Brevis (FPB sup.)</text>
-          <text x="325" y="1041" class="node-mnemonic" text-anchor="end">F [C8-T1]</text>
+        <g class="svg-branch-node" data-name="Flexor Pollicis Brevis (Superficial Head)" data-roots="C8, T1" data-desc="Flexes MCP of thumb. Deep head is innervated by ulnar nerve." data-type="motor">
+          ${this.renderNodeBox(40, 1030, 330, 48, "🥩 Flexor Pollicis Brevis (FPB sup.)", "สูตรจำ: F (AFO) • Major Roots: C8-T1", getStatus('hand', 'fpb'))}
         </g>
 
-        <g class="svg-branch-node ${getNodeClass('hand', 'op')}" data-name="Opponens Pollicis (OP)" data-roots="C8, T1" data-desc="Rotates 1st metacarpal for thumb opposition against fingertips." data-type="motor">
-          <rect x="55" y="1060" width="280" height="32" rx="5" class="node-box motor"/>
-          <text x="68" y="1081" class="node-title">🥩 Opponens Pollicis (OP)</text>
-          <text x="325" y="1081" class="node-mnemonic" text-anchor="end">O [C8-T1]</text>
+        <g class="svg-branch-node" data-name="Opponens Pollicis (OP)" data-roots="C8, T1" data-desc="Rotates 1st metacarpal for thumb opposition against fingertips." data-type="motor">
+          ${this.renderNodeBox(40, 1090, 330, 48, "🥩 Opponens Pollicis (OP)", "สูตรจำ: O (AFO) • Major Roots: C8-T1", getStatus('hand', 'op'))}
         </g>
 
-        <g class="svg-branch-node ${getNodeClass('hand', 'lumbricals')}" data-name="1st & 2nd Lumbricals" data-roots="C8, T1" data-desc="Flexes MCP and extends IP of index and long fingers. Useful for 2L-INT comparison study." data-type="motor">
-          <rect x="55" y="1100" width="280" height="26" rx="5" class="node-box motor"/>
-          <text x="68" y="1118" class="node-title" font-size="11.5">🥩 1st & 2nd Lumbricals</text>
-          <text x="325" y="1118" class="node-mnemonic" text-anchor="end">[C8-T1]</text>
+        <g class="svg-branch-node" data-name="1st & 2nd Lumbricals" data-roots="C8, T1" data-desc="Flexes MCP and extends IP of index and long fingers. Useful for 2L-INT comparison study." data-type="motor">
+          ${this.renderNodeBox(40, 1150, 330, 48, "🥩 1st & 2nd Lumbricals", "Index & Middle Finger • Roots: C8-T1", getStatus('hand', 'lumbricals'))}
         </g>
 
         <!-- PALMAR DIGITAL SENSORY BRANCHES -->
-        <rect x="400" y="930" width="320" height="150" rx="8" class="hand-box-group sensory"/>
-        <text x="415" y="952" class="hand-group-title sensory">PALMAR DIGITAL SENSORY BRANCHES</text>
-        <text x="415" y="968" class="comp-sub">Common & Proper Digital Nerves</text>
-
-        <g class="svg-branch-node ${getNodeClass('hand', 'digitals')}" data-name="Palmar Digital Nerves" data-roots="C6, C7, C8" data-desc="Sensory to volar thumb, index, middle, and radial half of ring finger + dorsal tips over distal phalanges. Involved in CTS." data-type="sensory">
-          <rect x="415" y="980" width="290" height="42" rx="6" class="node-box sensory"/>
-          <text x="428" y="1000" class="node-title">🖐️ Digits 1, 2, 3, & 1/2 of 4 (Volar)</text>
-          <text x="428" y="1015" class="node-sub">Thumb, Index, Middle, Radial Ring Finger</text>
+        <g class="svg-branch-node" data-name="Palmar Digital Nerves" data-roots="C6, C7, C8" data-desc="Sensory to volar thumb, index, middle, and radial half of ring finger. Involved in CTS." data-type="sensory">
+          ${this.renderNodeBox(510, 970, 330, 52, "🖐️ Palmar Digital Nerves (Digits 1-3.5)", "Cutaneous: Thumb, Index, Middle, 1/2 Ring", getStatus('hand', 'digitals'), 'sensory')}
         </g>
 
-        <g class="svg-branch-node ${getNodeClass('hand', 'nailbeds')}" data-name="Dorsal Nail Bed Sensation" data-roots="C6, C7" data-desc="Supplies skin over the dorsum of distal and middle phalanges of digits 1-3.5." data-type="sensory">
-          <rect x="415" y="1030" width="290" height="36" rx="6" class="node-box sensory"/>
-          <text x="428" y="1052" class="node-title">🖐️ Dorsal Distal Nail Beds (Digits 1-3.5)</text>
+        <g class="svg-branch-node" data-name="Dorsal Nail Bed Sensation" data-roots="C6, C7" data-desc="Supplies skin over the dorsum of distal and middle phalanges of digits 1-3.5." data-type="sensory">
+          ${this.renderNodeBox(510, 1040, 330, 48, "🖐️ Dorsal Distal Nail Beds", "Digits 1, 2, 3, & radial 1/2 of 4", getStatus('hand', 'nailbeds'), 'sensory')}
         </g>
       </svg>
     `;
@@ -580,32 +662,30 @@ class PeripheralTreeVisualizer {
   // --- RADIAL NERVE SVG ---
   getRadialSvg() {
     const isLesion = this.activeLesion;
-    const isHighAxilla = isLesion === 'axilla-radial';
     const isSpiral = isLesion === 'spiral-groove';
     const isFrohse = isLesion === 'frohse';
     const isWartenberg = isLesion === 'wartenberg';
 
-    const getNodeClass = (nodeGroup) => {
-      if (!isLesion) return '';
-      if (isHighAxilla) return 'status-involved';
+    const getStatus = (nodeGroup) => {
+      if (!isLesion) return 'normal';
       if (isSpiral) {
-        if (nodeGroup === 'triceps') return 'status-spared';
-        return 'status-involved';
+        if (nodeGroup === 'triceps') return 'spared'; // KEY DISCRIMINATOR
+        return 'involved';
       }
       if (isFrohse) {
-        if (nodeGroup === 'triceps' || nodeGroup === 'br-ecrl' || nodeGroup === 'srn-sensory') return 'status-spared';
-        if (nodeGroup === 'pin-muscles') return 'status-involved';
-        return 'status-spared';
+        if (nodeGroup === 'triceps' || nodeGroup === 'br-ecrl' || nodeGroup === 'srn-sensory') return 'spared';
+        if (nodeGroup === 'pin-muscles') return 'involved';
+        return 'spared';
       }
       if (isWartenberg) {
-        if (nodeGroup === 'srn-sensory') return 'status-involved';
-        return 'status-spared';
+        if (nodeGroup === 'srn-sensory') return 'involved';
+        return 'spared';
       }
-      return '';
+      return 'normal';
     };
 
     return `
-      <svg viewBox="0 0 760 1160" class="peripheral-stem-svg" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 880 1260" class="peripheral-stem-svg" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="radialStemGrad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stop-color="#a855f7"/>
@@ -615,176 +695,126 @@ class PeripheralTreeVisualizer {
         </defs>
 
         <g class="compartment-bands">
-          <rect x="20" y="20" width="720" height="220" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
+          <rect x="20" y="20" width="840" height="230" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
           <text x="35" y="45" class="comp-label">AXILLA & PROXIMAL ARM (BEFORE SPIRAL GROOVE)</text>
-          <text x="720" y="45" class="comp-sub" text-anchor="end">Triceps innervation PROXIMAL to groove</text>
+          <text x="840" y="45" class="comp-sub" text-anchor="end">Triceps innervation PROXIMAL to groove</text>
 
-          <rect x="20" y="250" width="720" height="150" rx="8" fill="rgba(168, 85, 247, 0.05)" stroke="rgba(168, 85, 247, 0.2)"/>
-          <text x="35" y="275" class="comp-label">SPIRAL (RADIAL) GROOVE OF HUMERUS</text>
-          <text x="720" y="275" class="comp-sub" text-anchor="end">Saturday Night Palsy / Shaft Fracture</text>
+          <rect x="20" y="260" width="840" height="150" rx="8" fill="rgba(168, 85, 247, 0.05)" stroke="rgba(168, 85, 247, 0.2)"/>
+          <text x="35" y="285" class="comp-label">SPIRAL (RADIAL) GROOVE OF HUMERUS</text>
+          <text x="840" y="285" class="comp-sub" text-anchor="end">Saturday Night Palsy / Shaft Fracture</text>
 
-          <rect x="20" y="410" width="720" height="160" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
-          <text x="35" y="435" class="comp-label">DISTAL ARM & CUBITAL FOSSA</text>
-          <text x="720" y="435" class="comp-sub" text-anchor="end">BR & ECRL + Terminal Bifurcation</text>
+          <rect x="20" y="420" width="840" height="160" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
+          <text x="35" y="445" class="comp-label">DISTAL ARM & CUBITAL FOSSA</text>
+          <text x="840" y="445" class="comp-sub" text-anchor="end">BR & ECRL + Terminal Bifurcation</text>
 
-          <rect x="20" y="580" width="720" height="560" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
-          <text x="35" y="605" class="comp-label">FOREARM & HAND: TERMINAL DICHOTOMY</text>
-          <text x="720" y="605" class="comp-sub" text-anchor="end">PIN (Pure Motor) vs SRN (Pure Sensory)</text>
+          <rect x="20" y="590" width="840" height="650" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
+          <text x="35" y="615" class="comp-label">FOREARM & HAND: TERMINAL DICHOTOMY</text>
+          <text x="840" y="615" class="comp-sub" text-anchor="end">PIN (Pure Motor) vs SRN (Pure Sensory)</text>
         </g>
 
+        <!-- Spinal Roots Origin -->
         <g class="roots-convergence">
-          <text x="380" y="45" text-anchor="middle" class="svg-header-roots" fill="#c084fc">RADIAL NERVE (C5, C6, C7, C8, ±T1)</text>
-          <path d="M 290 60 Q 380 90 380 120" stroke="#a855f7" stroke-width="2.5" fill="none"/>
-          <path d="M 335 60 Q 380 90 380 120" stroke="#a855f7" stroke-width="2.5" fill="none"/>
-          <path d="M 380 60 L 380 120" stroke="#a855f7" stroke-width="4" fill="none"/>
-          <path d="M 425 60 Q 380 90 380 120" stroke="#a855f7" stroke-width="2.5" fill="none"/>
-          <path d="M 470 60 Q 380 90 380 120" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+          <text x="440" y="45" text-anchor="middle" class="svg-header-roots" fill="#c084fc">RADIAL NERVE (C5, C6, C7, C8, ±T1)</text>
+          <path d="M 340 60 Q 440 90 440 120" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+          <path d="M 390 60 Q 440 90 440 120" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+          <path d="M 440 60 L 440 120" stroke="#a855f7" stroke-width="4.5" fill="none"/>
+          <path d="M 490 60 Q 440 90 440 120" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+          <path d="M 540 60 Q 440 90 440 120" stroke="#a855f7" stroke-width="2.5" fill="none"/>
 
-          <circle cx="290" cy="60" r="4" fill="#a855f7"/>
-          <circle cx="335" cy="60" r="4" fill="#a855f7"/>
-          <circle cx="380" cy="60" r="5" fill="#a855f7"/>
-          <circle cx="425" cy="60" r="4" fill="#a855f7"/>
-          <circle cx="470" cy="60" r="4" fill="#a855f7"/>
-          <text x="290" y="52" class="root-dot-lbl" text-anchor="middle">C5</text>
-          <text x="335" y="52" class="root-dot-lbl" text-anchor="middle">C6</text>
-          <text x="380" y="52" class="root-dot-lbl" text-anchor="middle">C7</text>
-          <text x="425" y="52" class="root-dot-lbl" text-anchor="middle">C8</text>
-          <text x="470" y="52" class="root-dot-lbl" text-anchor="middle">T1</text>
+          <circle cx="340" cy="60" r="4" fill="#a855f7"/>
+          <circle cx="390" cy="60" r="4" fill="#a855f7"/>
+          <circle cx="440" cy="60" r="5" fill="#a855f7"/>
+          <circle cx="490" cy="60" r="4" fill="#a855f7"/>
+          <circle cx="540" cy="60" r="4" fill="#a855f7"/>
+          <text x="340" y="52" class="root-dot-lbl" text-anchor="middle">C5</text>
+          <text x="390" y="52" class="root-dot-lbl" text-anchor="middle">C6</text>
+          <text x="440" y="52" class="root-dot-lbl" text-anchor="middle">C7</text>
+          <text x="490" y="52" class="root-dot-lbl" text-anchor="middle">C8</text>
+          <text x="540" y="52" class="root-dot-lbl" text-anchor="middle">T1</text>
         </g>
 
-        <path d="M 380 120 L 380 500" stroke="url(#radialStemGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
+        <path d="M 440 120 L 440 520" stroke="url(#radialStemGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
 
         <!-- Triceps Long & Medial heads -->
-        <path d="M 380 145 C 430 145, 460 145, 490 145" stroke="#a855f7" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('triceps')}" data-name="Triceps - Long & Medial Heads" data-roots="C6, C7, C8" data-desc="Arises in axilla / high arm BEFORE spiral groove! SPARED IN SATURDAY NIGHT PALSY." data-type="motor">
-          <rect x="490" y="130" width="230" height="34" rx="6" class="node-box motor" style="border-left: 3px solid #a855f7;"/>
-          <text x="505" y="152" class="node-title">🥩 Triceps (Long & Med. Heads)</text>
-          <text x="710" y="152" class="node-mnemonic" text-anchor="end">ไตร [C6-C8]</text>
+        <path d="M 440 145 C 480 145, 500 145, 530 145" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Triceps - Long & Medial Heads" data-roots="C6, C7, C8" data-desc="Arises in axilla / high arm BEFORE spiral groove! SPARED IN SATURDAY NIGHT PALSY." data-type="motor">
+          ${this.renderNodeBox(530, 120, 310, 48, "🥩 Triceps (Long & Medial Heads)", "สูตรจำ: ไตร • Major Roots: C6-C8", getStatus('triceps'))}
         </g>
 
         <!-- Triceps Lateral head -->
-        <path d="M 380 185 C 330 185, 300 185, 270 185" stroke="#a855f7" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('triceps')}" data-name="Triceps - Lateral Head" data-roots="C6, C7, C8" data-desc="Arises just proximal to spiral groove. Extends elbow." data-type="motor">
-          <rect x="40" y="170" width="230" height="34" rx="6" class="node-box motor" style="border-left: 3px solid #a855f7;"/>
-          <text x="55" y="192" class="node-title">🥩 Triceps (Lateral Head)</text>
-          <text x="260" y="192" class="node-mnemonic" text-anchor="end">ไตร [C6-C8]</text>
-        </g>
-
-        <!-- Posterior Cutaneous Nerve of Arm -->
-        <path d="M 380 215 C 430 215, 460 215, 490 215" stroke="#f59e0b" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('triceps')}" data-name="Posterior Cutaneous Nerve of Arm" data-roots="C8" data-desc="Sensory to posterior aspect of arm. Spared in midshaft spiral groove palsy." data-type="sensory">
-          <rect x="490" y="200" width="230" height="30" rx="6" class="node-box sensory"/>
-          <text x="505" y="220" class="node-title">👁️ Post. Cutaneous Nerve of Arm</text>
+        <path d="M 440 195 C 400 195, 370 195, 340 195" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Triceps - Lateral Head" data-roots="C6, C7, C8" data-desc="Arises just proximal to spiral groove. Extends elbow." data-type="motor">
+          ${this.renderNodeBox(40, 170, 300, 48, "🥩 Triceps (Lateral Head)", "สูตรจำ: ไตร • Major Roots: C6-C8", getStatus('triceps'))}
         </g>
 
         <!-- Entrapment Pin: Spiral Groove -->
-        <g class="svg-entrapment-pin ${isSpiral ? 'active' : ''}" data-lesion="spiral-groove" transform="translate(380, 290)">
-          <rect x="-140" y="-14" width="280" height="28" rx="6" class="spiral-groove-band"/>
-          <circle cx="0" cy="0" r="14" class="pin-halo"/>
-          <circle cx="0" cy="0" r="9" class="pin-core"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <text x="0" y="32" class="pin-label-center" text-anchor="middle">Spiral Groove (Saturday Night Palsy / Fracture)</text>
-        </g>
-
-        <!-- Distal medial head & Anconeus -->
-        <path d="M 380 340 C 430 340, 460 345, 490 345" stroke="#a855f7" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('triceps')}" data-name="Anconeus & Distal Medial Head" data-roots="C7, C8" data-desc="Anconeus stabilizes elbow during pronation/supination." data-type="motor">
-          <rect x="490" y="330" width="230" height="30" rx="6" class="node-box motor"/>
-          <text x="505" y="350" class="node-title">🥩 Anconeus & Med. Head (Distal)</text>
-        </g>
-
-        <!-- Lower Lateral Cutaneous Nerve of Arm -->
-        <path d="M 380 375 C 330 375, 300 375, 270 375" stroke="#f59e0b" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('post-spiral')}" data-name="Lower Lateral Cutaneous of Arm" data-roots="C5, C6" data-desc="Supplies lower lateral skin of arm. Involved in spiral groove lesion." data-type="sensory">
-          <rect x="40" y="360" width="230" height="30" rx="6" class="node-box sensory"/>
-          <text x="55" y="380" class="node-title">👁️ Lower Lat. Cutaneous of Arm</text>
+        <g class="svg-entrapment-pin ${isSpiral ? 'active' : ''}" data-lesion="spiral-groove" transform="translate(440, 305)">
+          <rect x="-165" y="-18" width="330" height="36" rx="18" class="pin-pill-box" fill="${isSpiral ? '#ef4444' : 'rgba(239, 68, 68, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">⚠️ Spiral Groove (Saturday Night Palsy / Fracture)</text>
         </g>
 
         <!-- Brachioradialis (เบียร์) -->
-        <path d="M 380 445 C 430 445, 460 445, 490 445" stroke="#a855f7" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('br-ecrl')}" data-name="Brachioradialis (BR)" data-roots="C5, C6" data-desc="CRUCIAL DISCRIMINATOR: Weak in Spiral Groove lesion, SPARED in PIN / Arcade of Frohse lesion!" data-type="motor">
-          <rect x="490" y="430" width="230" height="34" rx="6" class="node-box motor" style="border-left: 3px solid #a855f7;"/>
-          <text x="505" y="452" class="node-title">🥩 Brachioradialis (BR)</text>
-          <text x="710" y="452" class="node-mnemonic" text-anchor="end">เบียร์ [C5-C6]</text>
+        <path d="M 440 455 C 480 455, 500 455, 530 455" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Brachioradialis (BR)" data-roots="C5, C6" data-desc="CRUCIAL DISCRIMINATOR: Weak in Spiral Groove lesion, SPARED in PIN / Arcade of Frohse lesion!" data-type="motor">
+          ${this.renderNodeBox(530, 430, 310, 48, "🥩 Brachioradialis (BR)", "สูตรจำ: เบียร์ • Major Roots: C5-C6", getStatus('br-ecrl'))}
         </g>
 
         <!-- ECRL (แอล) -->
-        <path d="M 380 485 C 430 485, 460 485, 490 485" stroke="#a855f7" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('br-ecrl')}" data-name="Extensor Carpi Radialis Longus (ECRL)" data-roots="C6, C7" data-desc="Wrist extension with radial deviation. Innervated proximal to elbow. Spared in PIN palsy (causes radial deviation on extension)!" data-type="motor">
-          <rect x="490" y="470" width="230" height="34" rx="6" class="node-box motor" style="border-left: 3px solid #a855f7;"/>
-          <text x="505" y="492" class="node-title">🥩 Extensor Carpi Radialis Longus</text>
-          <text x="710" y="492" class="node-mnemonic" text-anchor="end">แอล [C6-C7]</text>
+        <path d="M 440 515 C 480 515, 500 515, 530 515" stroke="#a855f7" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Extensor Carpi Radialis Longus (ECRL)" data-roots="C6, C7" data-desc="Wrist extension with radial deviation. Innervated proximal to elbow. Spared in PIN palsy (causes radial deviation on extension)!" data-type="motor">
+          ${this.renderNodeBox(530, 490, 310, 48, "🥩 Extensor Carpi Radialis Longus", "สูตรจำ: แอล • Major Roots: C6-C7", getStatus('br-ecrl'))}
         </g>
 
         <!-- Bifurcation -->
-        <circle cx="380" cy="520" r="6" fill="#a855f7"/>
-        <path d="M 380 520 C 320 550, 230 580, 230 630 L 230 1120" stroke="#8b5cf6" stroke-width="6" fill="none"/>
-        <path d="M 380 520 C 440 550, 530 580, 530 630 L 530 1120" stroke="#f59e0b" stroke-width="4.5" fill="none"/>
+        <circle cx="440" cy="540" r="6" fill="#a855f7"/>
+        <path d="M 440 540 C 370 570, 270 600, 270 650 L 270 1200" stroke="#8b5cf6" stroke-width="6" fill="none"/>
+        <path d="M 440 540 C 510 570, 610 600, 610 650 L 610 1200" stroke="#f59e0b" stroke-width="4.5" fill="none"/>
 
         <!-- Entrapment Pin: Arcade of Frohse -->
-        <g class="svg-entrapment-pin ${isFrohse ? 'active' : ''}" data-lesion="frohse" transform="translate(230, 630)">
-          <circle cx="0" cy="0" r="14" class="pin-halo"/>
-          <circle cx="0" cy="0" r="9" class="pin-core"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <rect x="-195" y="-12" width="180" height="24" rx="4" class="pin-badge-box"/>
-          <text x="-105" y="4" class="pin-label" text-anchor="middle">Arcade of Frohse (PIN Entrapment)</text>
+        <g class="svg-entrapment-pin ${isFrohse ? 'active' : ''}" data-lesion="frohse" transform="translate(270, 650)">
+          <rect x="-140" y="-18" width="280" height="36" rx="18" class="pin-pill-box" fill="${isFrohse ? '#ef4444' : 'rgba(168, 85, 247, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="11.5" font-weight="800">⚠️ Arcade of Frohse (PIN Entrapment)</text>
         </g>
 
         <!-- Supinator (สู้) -->
-        <path d="M 230 675 L 190 675" stroke="#8b5cf6" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('pin-muscles')}" data-name="Supinator" data-roots="C6, C7" data-desc="Surrounds radius; Arcade of Frohse is its proximal fibrous edge." data-type="motor">
-          <rect x="30" y="660" width="160" height="30" rx="5" class="node-box motor"/>
-          <text x="40" y="680" class="node-title">🥩 Supinator</text>
-          <text x="180" y="680" class="node-mnemonic" text-anchor="end">สู้ [C6-C7]</text>
+        <path d="M 270 705 L 240 705" stroke="#8b5cf6" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="Supinator" data-roots="C6, C7" data-desc="Surrounds radius; Arcade of Frohse is its proximal fibrous edge." data-type="motor">
+          ${this.renderNodeBox(30, 680, 240, 48, "🥩 Supinator", "สูตรจำ: สู้ • Roots: C6-C7", getStatus('pin-muscles'))}
         </g>
 
         <!-- EDC (ดี) -->
-        <path d="M 230 720 L 190 720" stroke="#8b5cf6" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('pin-muscles')}" data-name="Extensor Digitorum Communis (EDC)" data-roots="C7, C8" data-desc="Extends digits 2-5 at MCP joints. Standard muscle for radial motor study." data-type="motor">
-          <rect x="30" y="705" width="160" height="30" rx="5" class="node-box motor"/>
-          <text x="40" y="725" class="node-title">🥩 EDC (Communis)</text>
-          <text x="180" y="725" class="node-mnemonic" text-anchor="end">ดี [C7-C8]</text>
+        <path d="M 270 765 L 240 765" stroke="#8b5cf6" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="Extensor Digitorum Communis (EDC)" data-roots="C7, C8" data-desc="Extends digits 2-5 at MCP joints. Standard muscle for radial motor study." data-type="motor">
+          ${this.renderNodeBox(30, 740, 240, 48, "🥩 EDC (Communis)", "สูตรจำ: ดี • Roots: C7-C8", getStatus('pin-muscles'))}
         </g>
 
         <!-- ECU (ยู) -->
-        <path d="M 230 765 L 190 765" stroke="#8b5cf6" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('pin-muscles')}" data-name="Extensor Carpi Ulnaris (ECU)" data-roots="C7, C8" data-desc="Extends and adducts wrist (ulnar deviation)." data-type="motor">
-          <rect x="30" y="750" width="160" height="30" rx="5" class="node-box motor"/>
-          <text x="40" y="770" class="node-title">🥩 ECU (Ulnaris)</text>
-          <text x="180" y="770" class="node-mnemonic" text-anchor="end">ยู [C7-C8]</text>
+        <path d="M 270 825 L 240 825" stroke="#8b5cf6" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="Extensor Carpi Ulnaris (ECU)" data-roots="C7, C8" data-desc="Extends and adducts wrist (ulnar deviation)." data-type="motor">
+          ${this.renderNodeBox(30, 800, 240, 48, "🥩 ECU (Ulnaris)", "สูตรจำ: ยู • Roots: C7-C8", getStatus('pin-muscles'))}
         </g>
 
         <!-- Thumb Extensors: APL, EPB, EPL (โป้ง) -->
-        <path d="M 230 815 L 190 815" stroke="#8b5cf6" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('pin-muscles')}" data-name="APL & EPB & EPL" data-roots="C7, C8" data-desc="Abductor pollicis longus, extensor pollicis brevis and longus. Form anatomical snuffbox." data-type="motor">
-          <rect x="30" y="800" width="160" height="34" rx="5" class="node-box motor"/>
-          <text x="40" y="822" class="node-title">🥩 APL / EPB / EPL</text>
-          <text x="180" y="822" class="node-mnemonic" text-anchor="end">โป้ง [C7-C8]</text>
+        <path d="M 270 885 L 240 885" stroke="#8b5cf6" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="APL & EPB & EPL" data-roots="C7, C8" data-desc="Abductor pollicis longus, extensor pollicis brevis and longus. Form anatomical snuffbox." data-type="motor">
+          ${this.renderNodeBox(30, 860, 240, 48, "🥩 APL / EPB / EPL", "สูตรจำ: โป้ง • Roots: C7-C8", getStatus('pin-muscles'))}
         </g>
 
         <!-- EIP (ชี้ - TERMINAL PIN TARGET) -->
-        <path d="M 230 870 L 190 870" stroke="#8b5cf6" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('pin-muscles')}" data-name="Extensor Indicis Proprius (EIP)" data-roots="C7, C8" data-desc="⭐ TERMINAL PIN MUSCLE: Standard muscle for radial motor NCS recording and needle EMG! Separates Lower Trunk from Medial Cord." data-type="motor">
-          <rect x="20" y="855" width="170" height="38" rx="5" class="node-box motor" style="border: 2px solid #a855f7;"/>
-          <text x="30" y="876" class="node-title" style="fill:#e9d5ff;">⭐ EIP (Ext. Indicis)</text>
-          <text x="180" y="876" class="node-mnemonic" text-anchor="end">ชี้ [C7-C8]</text>
-          <text x="30" y="888" font-size="9" fill="#c084fc">TERMINAL PIN TARGET</text>
+        <path d="M 270 945 L 240 945" stroke="#8b5cf6" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="Extensor Indicis Proprius (EIP)" data-roots="C7, C8" data-desc="⭐ TERMINAL PIN MUSCLE: Standard muscle for radial motor NCS recording and needle EMG! Separates Lower Trunk from Medial Cord." data-type="motor">
+          ${this.renderNodeBox(20, 920, 250, 52, "⭐ EIP (Ext. Indicis)", "สูตรจำ: ชี้ • TERMINAL PIN TARGET", getStatus('pin-muscles'))}
         </g>
 
         <!-- RIGHT TOWER: SUPERFICIAL RADIAL (PURE SENSORY) -->
-        <g class="svg-entrapment-pin ${isWartenberg ? 'active' : ''}" data-lesion="wartenberg" transform="translate(530, 840)">
-          <circle cx="0" cy="0" r="14" class="pin-halo"/>
-          <circle cx="0" cy="0" r="9" class="pin-core"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <rect x="25" y="-12" width="180" height="24" rx="4" class="pin-badge-box"/>
-          <text x="115" y="4" class="pin-label" text-anchor="middle">Wartenberg's Syndrome (Handcuffs)</text>
+        <g class="svg-entrapment-pin ${isWartenberg ? 'active' : ''}" data-lesion="wartenberg" transform="translate(610, 780)">
+          <rect x="-140" y="-18" width="280" height="36" rx="18" class="pin-pill-box" fill="${isWartenberg ? '#ef4444' : 'rgba(245, 158, 11, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="11.5" font-weight="800">⚠️ Wartenberg's Syndrome (Handcuffs)</text>
         </g>
 
-        <path d="M 530 920 L 565 920" stroke="#f59e0b" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('srn-sensory')}" data-name="Superficial Radial Sensory" data-roots="C6, C7" data-desc="Cutaneous supply to anatomical snuffbox, radial 2/3 of dorsum of hand, dorsal proximal digits 1, 2, 3, and radial half of 4. SPARED IN PIN PALSY!" data-type="sensory">
-          <rect x="565" y="900" width="165" height="52" rx="6" class="node-box sensory"/>
-          <text x="575" y="922" class="node-title">👁️ Superficial Radial SNAP</text>
-          <text x="575" y="940" class="node-sub">Snuffbox & 1st Web Space</text>
+        <path d="M 610 880 L 590 880" stroke="#f59e0b" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="Superficial Radial Sensory" data-roots="C6, C7" data-desc="Cutaneous supply to anatomical snuffbox, radial 2/3 of dorsum of hand, dorsal proximal digits 1, 2, 3, and radial half of 4. SPARED IN PIN PALSY!" data-type="sensory">
+          ${this.renderNodeBox(560, 855, 300, 52, "👁️ Superficial Radial SNAP", "Snuffbox & 1st Web Space [C6-C7]", getStatus('srn-sensory'), 'sensory')}
         </g>
       </svg>
     `;
@@ -798,20 +828,20 @@ class PeripheralTreeVisualizer {
     const isGuyon2 = isLesion === 'guyon-zone2';
     const isGuyon3 = isLesion === 'guyon-zone3';
 
-    const getNodeClass = (nodeGroup) => {
-      if (!isLesion) return '';
-      if (isCubital) return 'status-involved';
+    const getStatus = (nodeGroup) => {
+      if (!isLesion) return 'normal';
+      if (isCubital) return 'involved';
       if (isGuyon1 || isGuyon2 || isGuyon3) {
-        if (nodeGroup === 'forearm' || nodeGroup === 'dunc-sensory') return 'status-spared';
-        if (isGuyon2 && nodeGroup === 'palmar-sensory') return 'status-spared';
-        if (isGuyon3 && nodeGroup === 'hand-motor') return 'status-spared';
-        return 'status-involved';
+        if (nodeGroup === 'forearm' || nodeGroup === 'dunc-sensory') return 'spared';
+        if (isGuyon2 && nodeGroup === 'palmar-sensory') return 'spared';
+        if (isGuyon3 && nodeGroup === 'hand-motor') return 'spared';
+        return 'involved';
       }
-      return '';
+      return 'normal';
     };
 
     return `
-      <svg viewBox="0 0 760 1160" class="peripheral-stem-svg" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 880 1260" class="peripheral-stem-svg" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="ulnarStemGrad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stop-color="#38bdf8"/>
@@ -821,147 +851,109 @@ class PeripheralTreeVisualizer {
         </defs>
 
         <g class="compartment-bands">
-          <rect x="20" y="20" width="720" height="200" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
+          <rect x="20" y="20" width="840" height="210" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
           <text x="35" y="45" class="comp-label">AXILLA & MEDIAL ARM</text>
-          <text x="720" y="45" class="comp-sub" text-anchor="end">No muscular branches in arm</text>
+          <text x="840" y="45" class="comp-sub" text-anchor="end">No muscular branches in arm</text>
 
-          <rect x="20" y="230" width="720" height="260" rx="8" fill="rgba(56, 189, 248, 0.05)" stroke="rgba(56, 189, 248, 0.2)"/>
-          <text x="35" y="255" class="comp-label">ELBOW: RETROEPICONDYLAR GROOVE & CUBITAL TUNNEL</text>
-          <text x="720" y="255" class="comp-sub" text-anchor="end">Osborne's Arcade between 2 heads of FCU</text>
+          <rect x="20" y="240" width="840" height="260" rx="8" fill="rgba(56, 189, 248, 0.05)" stroke="rgba(56, 189, 248, 0.2)"/>
+          <text x="35" y="265" class="comp-label">ELBOW: RETROEPICONDYLAR GROOVE & CUBITAL TUNNEL</text>
+          <text x="840" y="265" class="comp-sub" text-anchor="end">Osborne's Arcade between 2 heads of FCU</text>
 
-          <rect x="20" y="500" width="720" height="280" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
-          <text x="35" y="525" class="comp-label">FOREARM & PRE-WRIST SENSORY BRANCHES</text>
-          <text x="720" y="525" class="comp-sub" text-anchor="end">DUNC branches 5-8 cm ABOVE wrist!</text>
+          <rect x="20" y="510" width="840" height="280" rx="8" fill="rgba(15, 23, 42, 0.45)" stroke="rgba(255,255,255,0.06)"/>
+          <text x="35" y="535" class="comp-label">FOREARM & PRE-WRIST SENSORY BRANCHES</text>
+          <text x="840" y="535" class="comp-sub" text-anchor="end">DUNC branches 5-8 cm ABOVE wrist!</text>
 
-          <rect x="20" y="790" width="720" height="350" rx="8" fill="rgba(245, 158, 11, 0.04)" stroke="rgba(245, 158, 11, 0.2)"/>
-          <text x="35" y="815" class="comp-label">WRIST & HAND: GUYON'S CANAL (PISOHAMATE)</text>
-          <text x="720" y="815" class="comp-sub" text-anchor="end">Zones 1, 2, and 3 Dichotomy</text>
+          <rect x="20" y="800" width="840" height="440" rx="8" fill="rgba(245, 158, 11, 0.04)" stroke="rgba(245, 158, 11, 0.2)"/>
+          <text x="35" y="825" class="comp-label">WRIST & HAND: GUYON'S CANAL (PISOHAMATE)</text>
+          <text x="840" y="825" class="comp-sub" text-anchor="end">Zones 1, 2, and 3 Dichotomy</text>
         </g>
 
+        <!-- Spinal Roots Origin -->
         <g class="roots-convergence">
-          <text x="380" y="45" text-anchor="middle" class="svg-header-roots" fill="#60a5fa">ULNAR NERVE (C8, T1, ±C7)</text>
-          <path d="M 330 60 Q 380 90 380 120" stroke="#38bdf8" stroke-width="3" fill="none"/>
-          <path d="M 380 60 L 380 120" stroke="#38bdf8" stroke-width="4.5" fill="none"/>
-          <path d="M 430 60 Q 380 90 380 120" stroke="#38bdf8" stroke-width="3" fill="none"/>
+          <text x="440" y="45" text-anchor="middle" class="svg-header-roots" fill="#60a5fa">ULNAR NERVE (C8, T1, ±C7)</text>
+          <path d="M 390 60 Q 440 90 440 120" stroke="#38bdf8" stroke-width="3" fill="none"/>
+          <path d="M 440 60 L 440 120" stroke="#38bdf8" stroke-width="4.5" fill="none"/>
+          <path d="M 490 60 Q 440 90 440 120" stroke="#38bdf8" stroke-width="3" fill="none"/>
 
-          <circle cx="330" cy="60" r="4" fill="#38bdf8"/>
-          <circle cx="380" cy="60" r="5" fill="#38bdf8"/>
-          <circle cx="430" cy="60" r="4" fill="#38bdf8"/>
-          <text x="330" y="52" class="root-dot-lbl" text-anchor="middle">C7</text>
-          <text x="380" y="52" class="root-dot-lbl" text-anchor="middle">C8</text>
-          <text x="430" y="52" class="root-dot-lbl" text-anchor="middle">T1</text>
+          <circle cx="390" cy="60" r="4" fill="#38bdf8"/>
+          <circle cx="440" cy="60" r="5" fill="#38bdf8"/>
+          <circle cx="490" cy="60" r="4" fill="#38bdf8"/>
+          <text x="390" y="52" class="root-dot-lbl" text-anchor="middle">C7</text>
+          <text x="440" y="52" class="root-dot-lbl" text-anchor="middle">C8</text>
+          <text x="490" y="52" class="root-dot-lbl" text-anchor="middle">T1</text>
         </g>
 
-        <path d="M 380 120 L 380 810" stroke="url(#ulnarStemGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
+        <path d="M 440 120 L 440 820" stroke="url(#ulnarStemGrad)" stroke-width="8" stroke-linecap="round" fill="none"/>
 
         <!-- Entrapment Pin: Cubital Tunnel -->
-        <g class="svg-entrapment-pin ${isCubital ? 'active' : ''}" data-lesion="cubital-tunnel" transform="translate(380, 280)">
-          <rect x="-140" y="-14" width="280" height="28" rx="6" class="cubital-tunnel-band"/>
-          <circle cx="0" cy="0" r="14" class="pin-halo"/>
-          <circle cx="0" cy="0" r="9" class="pin-core"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <text x="0" y="32" class="pin-label-center" text-anchor="middle">Cubital Tunnel / Retroepicondylar Groove</text>
+        <g class="svg-entrapment-pin ${isCubital ? 'active' : ''}" data-lesion="cubital-tunnel" transform="translate(440, 290)">
+          <rect x="-160" y="-18" width="320" height="36" rx="18" class="pin-pill-box" fill="${isCubital ? '#ef4444' : 'rgba(239, 68, 68, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">⚠️ Cubital Tunnel / Retroepicondylar Groove</text>
         </g>
 
         <!-- FCU Branch (ยู) -->
-        <path d="M 380 360 C 430 360, 460 360, 490 360" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('forearm')}" data-name="Flexor Carpi Ulnaris (FCU)" data-roots="C8, T1" data-desc="Innervated at or immediately distal to cubital tunnel. Wrist flexion with ulnar deviation." data-type="motor">
-          <rect x="490" y="345" width="230" height="34" rx="6" class="node-box motor" style="border-left: 3px solid #38bdf8;"/>
-          <text x="505" y="367" class="node-title">🥩 Flexor Carpi Ulnaris (FCU)</text>
-          <text x="710" y="367" class="node-mnemonic" text-anchor="end">ยู [C8-T1]</text>
+        <path d="M 440 365 C 480 365, 500 365, 530 365" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Flexor Carpi Ulnaris (FCU)" data-roots="C8, T1" data-desc="Innervated at or immediately distal to cubital tunnel. Wrist flexion with ulnar deviation." data-type="motor">
+          ${this.renderNodeBox(530, 340, 310, 48, "🥩 Flexor Carpi Ulnaris (FCU)", "สูตรจำ: ยู • Major Roots: C8-T1", getStatus('forearm'))}
         </g>
 
         <!-- FDP 3 & 4 (ดี) -->
-        <path d="M 380 410 C 430 410, 460 410, 490 410" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('forearm')}" data-name="Flexor Digitorum Profundus III & IV" data-roots="C8, T1" data-desc="Flexes DIP joints of ring and little fingers. Ulnar claw deformity is worse if FDP is intact ('Ulnar Paradox')." data-type="motor">
-          <rect x="490" y="395" width="230" height="34" rx="6" class="node-box motor" style="border-left: 3px solid #38bdf8;"/>
-          <text x="505" y="417" class="node-title">🥩 FDP (Medial 4th & 5th Digits)</text>
-          <text x="710" y="417" class="node-mnemonic" text-anchor="end">ดี [C8-T1]</text>
+        <path d="M 440 435 C 480 435, 500 435, 530 435" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Flexor Digitorum Profundus III & IV" data-roots="C8, T1" data-desc="Flexes DIP joints of ring and little fingers. Ulnar claw deformity is worse if FDP is intact ('Ulnar Paradox')." data-type="motor">
+          ${this.renderNodeBox(530, 410, 310, 48, "🥩 FDP (Medial 4th & 5th Digits)", "สูตรจำ: ดี • Major Roots: C8-T1", getStatus('forearm'))}
         </g>
 
-        <!-- Palmar Cutaneous Branch of Ulnar Nerve -->
-        <path d="M 380 570 C 330 570, 300 570, 270 570" stroke="#f59e0b" stroke-width="2" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('dunc-sensory')}" data-name="Palmar Cutaneous of Ulnar" data-roots="C8, T1" data-desc="Arises in mid-forearm, supplies skin over hypothenar eminence. Spared in Guyon canal." data-type="sensory">
-          <rect x="40" y="555" width="230" height="30" rx="6" class="node-box sensory"/>
-          <text x="55" y="575" class="node-title">👁️ Palmar Cutaneous of Ulnar</text>
+        <!-- Palmar Cutaneous Branch -->
+        <path d="M 440 590 C 390 590, 360 590, 330 590" stroke="#f59e0b" stroke-width="2" fill="none"/>
+        <g class="svg-branch-node" data-name="Palmar Cutaneous of Ulnar" data-roots="C8, T1" data-desc="Arises in mid-forearm, supplies skin over hypothenar eminence. Spared in Guyon canal." data-type="sensory">
+          ${this.renderNodeBox(30, 565, 300, 48, "👁️ Palmar Cutaneous of Ulnar", "Skin over hypothenar eminence", getStatus('dunc-sensory'), 'sensory')}
         </g>
 
         <!-- DUNC: Dorsal Ulnar Cutaneous Nerve -->
-        <path d="M 380 640 C 430 640, 460 640, 490 640" stroke="#f59e0b" stroke-width="3.5" fill="none"/>
-        <g class="svg-branch-node ${getNodeClass('dunc-sensory')}" data-name="Dorsal Ulnar Cutaneous (DUNC)" data-roots="C8, T1" data-desc="⭐ CRUCIAL PM&R GOLD STANDARD: Branches 5-8 cm PROXIMAL to the wrist! DUNC SNAP is ABNORMAL in Cubital Tunnel, but NORMAL in Guyon's Canal!" data-type="sensory">
-          <rect x="490" y="618" width="235" height="44" rx="6" class="node-box sensory" style="border: 2px solid #fbbf24;"/>
-          <text x="502" y="638" class="node-title" style="fill:#fef08a;">👁️ DUNC (Dorsal Cutaneous)</text>
-          <text x="502" y="654" class="node-sub" style="fill:#fde047;">⭐ SPARED IN GUYON'S CANAL</text>
+        <path d="M 440 660 C 480 660, 500 660, 530 660" stroke="#f59e0b" stroke-width="3.5" fill="none"/>
+        <g class="svg-branch-node" data-name="Dorsal Ulnar Cutaneous (DUNC)" data-roots="C8, T1" data-desc="⭐ CRUCIAL PM&R GOLD STANDARD: Branches 5-8 cm PROXIMAL to the wrist! DUNC SNAP is ABNORMAL in Cubital Tunnel, but NORMAL in Guyon's Canal!" data-type="sensory">
+          ${this.renderNodeBox(530, 635, 310, 52, "👁️ DUNC (Dorsal Cutaneous)", "⭐ SPARED IN GUYON'S CANAL (Dorsal Hand)", getStatus('dunc-sensory'), 'sensory')}
         </g>
 
-        <text x="380" y="720" text-anchor="middle" font-size="11.5" fill="#fde047" font-weight="700">
+        <text x="440" y="735" text-anchor="middle" font-size="12" fill="#fde047" font-weight="700">
           ▲ Branches 5-8 cm proximal to wrist (Does NOT enter Guyon's canal!)
         </text>
 
         <!-- Entrapment Pin: Guyon's Canal -->
-        <g class="svg-entrapment-pin ${isGuyon1 ? 'active' : ''}" data-lesion="guyon-zone1" transform="translate(380, 810)">
-          <rect x="-140" y="-14" width="280" height="28" rx="6" class="guyon-canal-band"/>
-          <circle cx="0" cy="0" r="14" class="pin-halo"/>
-          <circle cx="0" cy="0" r="9" class="pin-core"/>
-          <text x="0" y="4" text-anchor="middle" class="pin-symbol">⚠️</text>
-          <text x="0" y="32" class="pin-label-center" text-anchor="middle">Guyon's Canal (Pisohamate Hiatus)</text>
+        <g class="svg-entrapment-pin ${isGuyon1 || isGuyon2 || isGuyon3 ? 'active' : ''}" data-lesion="guyon-zone1" transform="translate(440, 820)">
+          <rect x="-160" y="-18" width="320" height="36" rx="18" class="pin-pill-box" fill="${isGuyon1 || isGuyon2 || isGuyon3 ? '#ef4444' : 'rgba(239, 68, 68, 0.85)'}"/>
+          <text x="0" y="5" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">⚠️ Guyon's Canal (Pisohamate Hiatus)</text>
         </g>
 
         <!-- Bifurcation in Hand -->
-        <path d="M 380 830 L 380 870" stroke="#38bdf8" stroke-width="6" fill="none"/>
-        <path d="M 380 870 C 330 900, 270 920, 220 940" stroke="#f59e0b" stroke-width="3" fill="none"/>
-        <path d="M 380 870 C 430 900, 490 920, 540 940" stroke="#38bdf8" stroke-width="4.5" fill="none"/>
+        <path d="M 440 840 L 440 880" stroke="#38bdf8" stroke-width="6" fill="none"/>
+        <path d="M 440 880 C 370 910, 310 930, 260 950" stroke="#f59e0b" stroke-width="3" fill="none"/>
+        <path d="M 440 880 C 510 910, 570 930, 620 950" stroke="#38bdf8" stroke-width="4.5" fill="none"/>
 
         <!-- LEFT SIDE: SUPERFICIAL TERMINAL BRANCH -->
-        <rect x="30" y="930" width="280" height="150" rx="8" class="hand-box-group sensory"/>
-        <text x="45" y="952" class="hand-group-title sensory">SUPERFICIAL TERMINAL BRANCH</text>
-        <text x="45" y="968" class="comp-sub">Zone 3 involvement</text>
-
-        <!-- Palmaris Brevis (สั้น) -->
-        <g class="svg-branch-node ${getNodeClass('palmar-sensory')}" data-name="Palmaris Brevis" data-roots="C8, T1" data-desc="Small subcutaneous motor muscle; puckers hypothenar skin." data-type="motor">
-          <rect x="45" y="980" width="250" height="28" rx="5" class="node-box motor"/>
-          <text x="55" y="999" class="node-title" font-size="12">🥩 Palmaris Brevis (PB)</text>
-          <text x="285" y="999" class="node-mnemonic" text-anchor="end">สั้น [C8-T1]</text>
+        <g class="svg-branch-node" data-name="Palmaris Brevis" data-roots="C8, T1" data-desc="Small subcutaneous motor muscle; puckers hypothenar skin." data-type="motor">
+          ${this.renderNodeBox(30, 930, 310, 48, "🥩 Palmaris Brevis (PB)", "สูตรจำ: สั้น • Major Roots: C8-T1", getStatus('palmar-sensory'))}
         </g>
 
-        <!-- Palmar Digital Sensory (ผิว) -->
-        <g class="svg-branch-node ${getNodeClass('palmar-sensory')}" data-name="Ulnar Digital Sensory" data-roots="C8, T1" data-desc="Sensory to entire 5th digit and medial half of 4th digit (volar aspect and nail beds)." data-type="sensory">
-          <rect x="45" y="1018" width="250" height="48" rx="6" class="node-box sensory"/>
-          <text x="55" y="1038" class="node-title">🖐️ Digits 5 & 1/2 of 4 (Volar)</text>
-          <text x="55" y="1054" class="node-sub">Little Finger & Medial Ring Finger</text>
+        <g class="svg-branch-node" data-name="Ulnar Digital Sensory" data-roots="C8, T1" data-desc="Sensory to entire 5th digit and medial half of 4th digit." data-type="sensory">
+          ${this.renderNodeBox(30, 995, 310, 48, "🖐️ Digits 5 & 1/2 of 4 (Volar)", "สูตรจำ: ผิว • Little & Ring Finger", getStatus('palmar-sensory'), 'sensory')}
         </g>
 
         <!-- RIGHT SIDE: DEEP MOTOR BRANCH -->
-        <rect x="340" y="930" width="380" height="215" rx="8" class="hand-box-group"/>
-        <text x="355" y="952" class="hand-group-title">DEEP MOTOR BRANCH (ALL INTRINSICS)</text>
-        <text x="355" y="968" class="comp-sub">Zone 2 involvement: Curves around hook of hamate</text>
-
-        <!-- ADM -->
-        <g class="svg-branch-node ${getNodeClass('hand-motor')}" data-name="Abductor Digiti Minimi (ADM)" data-roots="C8, T1" data-desc="Standard ulnar CMAP recording site. Abducts 5th digit." data-type="motor">
-          <rect x="355" y="980" width="350" height="30" rx="5" class="node-box motor"/>
-          <text x="368" y="1000" class="node-title">🥩 Abductor Digiti Minimi (ADM)</text>
-          <text x="695" y="1000" class="node-mnemonic" text-anchor="end">ADM [C8-T1]</text>
+        <g class="svg-branch-node" data-name="Abductor Digiti Minimi (ADM)" data-roots="C8, T1" data-desc="Standard ulnar CMAP recording site. Abducts 5th digit." data-type="motor">
+          ${this.renderNodeBox(530, 930, 310, 48, "🥩 Abductor Digiti Minimi (ADM)", "สูตรจำ: ลึก • Standard CMAP Site", getStatus('hand-motor'))}
         </g>
 
-        <!-- FDI & Interossei -->
-        <g class="svg-branch-node ${getNodeClass('hand-motor')}" data-name="First Dorsal Interosseous (FDI)" data-roots="C8, T1" data-desc="Primary muscle for ulnar needle EMG! 4 Dorsal Interossei (abduct) + 3 Palmar Interossei (adduct)." data-type="motor">
-          <rect x="355" y="1018" width="350" height="32" rx="5" class="node-box motor" style="border: 2px solid #38bdf8;"/>
-          <text x="368" y="1039" class="node-title" style="fill:#e0f2fe;">⭐ First Dorsal Interosseous (FDI) & All Interossei</text>
-          <text x="695" y="1039" class="node-mnemonic" text-anchor="end">FDI [C8-T1]</text>
+        <g class="svg-branch-node" data-name="First Dorsal Interosseous (FDI)" data-roots="C8, T1" data-desc="Primary muscle for ulnar needle EMG! 4 Dorsal Interossei (abduct) + 3 Palmar Interossei (adduct)." data-type="motor">
+          ${this.renderNodeBox(530, 990, 310, 48, "⭐ First Dorsal Interosseous (FDI)", "สูตรจำ: ลึก • Primary EMG Muscle", getStatus('hand-motor'))}
         </g>
 
-        <!-- Lumbricals 3 & 4 + FDM/ODM -->
-        <g class="svg-branch-node ${getNodeClass('hand-motor')}" data-name="Lumbricals 3 & 4 and ODM/FDM" data-roots="C8, T1" data-desc="Flex MCP and extend IP of digits 4 and 5." data-type="motor">
-          <rect x="355" y="1058" width="350" height="30" rx="5" class="node-box motor"/>
-          <text x="368" y="1078" class="node-title">🥩 Lumbricals 3 & 4, ODM, FDM</text>
-          <text x="695" y="1078" class="node-mnemonic" text-anchor="end">[C8-T1]</text>
+        <g class="svg-branch-node" data-name="Lumbricals 3 & 4 and ODM/FDM" data-roots="C8, T1" data-desc="Flex MCP and extend IP of digits 4 and 5." data-type="motor">
+          ${this.renderNodeBox(530, 1050, 310, 48, "🥩 Lumbricals 3 & 4, ODM, FDM", "สูตรจำ: ลึก • Hand Intrinsics", getStatus('hand-motor'))}
         </g>
 
-        <!-- Adductor Pollicis & FPB deep head -->
-        <g class="svg-branch-node ${getNodeClass('hand-motor')}" data-name="Adductor Pollicis & FPB deep head" data-roots="C8, T1" data-desc="Adductor pollicis weakness causes Froment's sign (thumb IP flexes via FPL to compensate)." data-type="motor">
-          <rect x="355" y="1096" width="350" height="34" rx="5" class="node-box motor"/>
-          <text x="368" y="1118" class="node-title">🥩 Adductor Pollicis (Froment Sign)</text>
-          <text x="695" y="1118" class="node-mnemonic" text-anchor="end">AP [C8-T1]</text>
+        <g class="svg-branch-node" data-name="Adductor Pollicis & FPB deep head" data-roots="C8, T1" data-desc="Adductor pollicis weakness causes Froment's sign (thumb IP flexes via FPL to compensate)." data-type="motor">
+          ${this.renderNodeBox(530, 1110, 310, 48, "🥩 Adductor Pollicis (Froment Sign)", "สูตรจำ: ลึก • Froment Sign Test", getStatus('hand-motor'))}
         </g>
       </svg>
     `;
@@ -1194,4 +1186,11 @@ class PeripheralTreeVisualizer {
 
     return null;
   }
+}
+
+if (typeof window !== 'undefined') {
+  window.PeripheralTreeVisualizer = PeripheralTreeVisualizer;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { PeripheralTreeVisualizer };
 }
