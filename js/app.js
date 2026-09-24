@@ -152,6 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const dossier = rootDossiers[rootVal];
     if (!detailsPanel || !dossier) return;
 
+    const majorFromTable = PLEXUS_DATA.rootDistributionTable
+      ? PLEXUS_DATA.rootDistributionTable.filter(m => m[rootVal.toLowerCase()] === 'major').map(m => m.muscle)
+      : dossier.primaryMuscles;
+
     detailsPanel.innerHTML = `
       <div class="detail-header" style="border-bottom: 2px solid var(--accent-sky);">
         <span class="category-tag" style="color: var(--accent-sky); font-size:11px;">🔍 ROOT PATHWAY ACTIVE TRACING</span>
@@ -176,9 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div class="detail-row">
-          <span class="label">Primary Target Muscles (Major Myotome):</span>
+          <span class="label">Primary Target Muscles (Major ${rootVal} Myotome - ${majorFromTable.length} Muscles):</span>
           <div class="badges-wrap">
-            ${dossier.primaryMuscles.map(m => `<span class="badge badge-teal">${m}</span>`).join(' ')}
+            ${majorFromTable.map(m => `<span class="badge badge-teal">${m}</span>`).join(' ')}
           </div>
         </div>
 
@@ -205,6 +209,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailsPanel = document.getElementById('element-details-card');
     if (!detailsPanel) return;
 
+    // Direct root click handler
+    if (id.startsWith('root-')) {
+      const rName = id.replace('root-', '').toUpperCase();
+      filterBtns.forEach(b => {
+        if (b.getAttribute('data-root') === rName) b.classList.add('active');
+        else b.classList.remove('active');
+      });
+      if (svgRenderer) svgRenderer.setFilter('root', rName);
+      inspectRootPathway(rName);
+      return;
+    }
+
     let item = null;
     let category = '';
 
@@ -229,11 +245,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!item) return;
 
     // Check if Pure Sensory Nerve (NO MOTOR INNERVATION)
-    const isPureSensory = item.id === 'med-cut-forearm' || 
+    const isPureSensory = item.isSensory ||
+                          item.id === 'med-cut-forearm' || 
                           item.id === 'med-cut-arm' || 
                           item.id === 'intercostal-t1' || 
                           item.name.toLowerCase().includes('cutaneous') ||
-                          (category === 'COLLATERAL BRANCH' && item.muscles && item.muscles.length === 0);
+                          (category === 'COLLATERAL BRANCH' && (!item.muscles || item.muscles.length === 0));
 
     let musclesSection = '';
     if (isPureSensory) {
@@ -258,28 +275,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="badges-wrap">${item.muscles.map(m => `<span class="badge badge-teal">${m}</span>`).join(' ')}</div>
         </div>
       `;
-    } else if (category === 'ROOT') {
-      const rName = item.roots[0];
-      const majorM = PLEXUS_DATA.rootDistributionTable
-        ? PLEXUS_DATA.rootDistributionTable.filter(m => m[rName.toLowerCase()] === 'major').map(m => m.muscle)
-        : [];
-      musclesSection = `
-        <div class="detail-row">
-          <span class="label">Primary Muscles (Major ${rName} Myotome):</span>
-          <div class="badges-wrap">${majorM.map(m => `<span class="badge badge-teal">${m}</span>`).join(' ')}</div>
-        </div>
-      `;
-    } else if (category === 'TERMINAL BRANCH') {
-      const nerveKey = item.name.toLowerCase().split(' ')[0];
-      const matchM = PLEXUS_DATA.muscles.filter(m => m.nerve && m.nerve.toLowerCase().includes(nerveKey));
-      if (matchM.length > 0) {
-        musclesSection = `
-          <div class="detail-row">
-            <span class="label">Innervated Muscles:</span>
-            <div class="badges-wrap">${matchM.map(m => `<span class="badge badge-teal">${m.name}</span>`).join(' ')}</div>
-          </div>
-        `;
-      }
     }
 
     detailsPanel.innerHTML = `
@@ -294,6 +289,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="detail-row">
             <span class="label">Spinal Roots:</span>
             <div class="badges">${item.roots.map(r => `<span class="badge badge-root">${r}</span>`).join(' ')}</div>
+          </div>
+        ` : ''}
+
+        ${item.cord ? `
+          <div class="detail-row">
+            <span class="label">Plexus Origin Cord:</span>
+            <span class="badge badge-teal">${item.cord}</span>
           </div>
         ` : ''}
 
@@ -633,9 +635,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderRootTable() {
     if (!rootTableTbody || !PLEXUS_DATA.rootDistributionTable) return;
-    const query = (rootSearchInput ? rootSearchInput.value : '').toLowerCase().trim();
-    const filterRoot = rootFilterSelector ? rootFilterSelector.value : 'all';
-    const majorOnly = rootMajorOnlyCheckbox ? rootMajorOnlyCheckbox.checked : false;
+    const query = (rootSearchInput && rootSearchInput.value ? String(rootSearchInput.value) : '').toLowerCase().trim();
+    const filterRoot = rootFilterSelector && rootFilterSelector.value ? rootFilterSelector.value : 'all';
+    const majorOnly = rootMajorOnlyCheckbox ? Boolean(rootMajorOnlyCheckbox.checked) : false;
 
     let filtered = PLEXUS_DATA.rootDistributionTable.filter(item => {
       const matchQuery = item.muscle.toLowerCase().includes(query) || item.nerve.toLowerCase().includes(query);
@@ -730,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (muscleSearchInput) {
     muscleSearchInput.addEventListener('input', (e) => {
-      const q = e.target.value.toLowerCase().trim();
+      const q = (e && e.target && e.target.value ? String(e.target.value) : '').toLowerCase().trim();
       const filtered = PLEXUS_DATA.muscles.filter(m => 
         m.name.toLowerCase().includes(q) ||
         m.roots.toLowerCase().includes(q) ||

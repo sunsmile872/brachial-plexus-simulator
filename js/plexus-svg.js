@@ -557,12 +557,30 @@ class PlexusSVGRenderer {
         const id = node.getAttribute('data-id') || '';
         let nodeMatch = false;
         if (type === 'root') {
-          if (id === 'root-' + value.toLowerCase()) nodeMatch = true;
-          else {
-            const matchedSegment = this.container.querySelector();
-            if (matchedSegment) nodeMatch = true;
+          if (id === 'root-' + value.toLowerCase()) {
+            nodeMatch = true;
+          } else {
+            const matchedSegments = this.container.querySelectorAll(`.nerve-segment[data-id="${id}"]`);
+            matchedSegments.forEach(seg => {
+              const rList = (seg.getAttribute('data-roots') || '').split(',');
+              if (rList.includes(value)) nodeMatch = true;
+            });
+
+            if (!nodeMatch && typeof PLEXUS_DATA !== 'undefined') {
+              const term = PLEXUS_DATA.segments.terminals.find(t => t.id === id);
+              if (term && term.roots && term.roots.includes(value)) nodeMatch = true;
+              const col = PLEXUS_DATA.collateralBranches.find(b => b.id === id);
+              if (col && col.roots && col.roots.includes(value)) nodeMatch = true;
+              const trk = PLEXUS_DATA.segments.trunks.find(t => t.id === id);
+              if (trk && trk.roots && trk.roots.includes(value)) nodeMatch = true;
+              const crd = PLEXUS_DATA.segments.cords.find(c => c.id === id);
+              if (crd && crd.roots && crd.roots.includes(value)) nodeMatch = true;
+            }
           }
+        } else if (type === 'segment') {
+          if (id === value) nodeMatch = true;
         }
+
         if (nodeMatch) {
           node.style.opacity = '1';
           node.style.filter = 'url(#glow-effect)';
