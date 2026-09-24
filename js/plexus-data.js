@@ -2694,6 +2694,193 @@ const PLEXUS_DATA = {
         }
       ],
       "pearls": "THE PRE-GANGLIONIC PARADOX: Despite complete clinical anesthesia of the limb, all sensory nerve action potentials (SNAPs) are completely NORMAL! Why? The sensory cell bodies reside in the DRG, which remains intact outside the spinal cord, so postganglionic sensory axons never undergo Wallerian degeneration. Conversely, motor axons undergo complete degeneration, and dorsal rami to paraspinals show profuse denervation."
+    },
+    {
+      "id": "middle-trunk",
+      "title": "Middle Trunk Plexopathy (C7 Territory)",
+      "etiology": "High-energy traction trauma, compression, or surgical trauma (rare, ~1% of isolated plexopathies).",
+      "anatomy": "Middle Trunk (isolated continuation of C7 anterior ramus).",
+      "clinicalPresentation": "Weakness of elbow extension (Triceps), wrist extension (ECR/EDC), finger extension (EIP), and forearm pronation (Pronator Teres). Intact shoulder abduction (Deltoid C5-C6) and hand intrinsics (APB/ADM C8-T1).",
+      "sensoryLoss": "Palmar and dorsal aspect of middle finger (C7 dermatome).",
+      "ncsFindings": {
+        "lacSnap": "NORMAL (C5-C6)",
+        "radialSensory": "NORMAL or borderline",
+        "medianSensoryD2": "NORMAL (C6 contribution)",
+        "medianSensoryD3": "ABSENT or markedly reduced (pure C7 sensory fiber)",
+        "mabcSnap": "NORMAL (C8-T1)",
+        "ulnarSnap": "NORMAL (C8)",
+        "medianMotorApb": "NORMAL (C8-T1)",
+        "ulnarMotorAdm": "NORMAL (C8-T1)"
+      },
+      "emgFindings": [
+        {
+          "muscle": "Triceps (Radial C7)",
+          "result": "2+ to 3+ Fibs/PSWs, reduced recruitment"
+        },
+        {
+          "muscle": "Pronator Teres (Median C6-C7)",
+          "result": "2+ Fibs/PSWs"
+        },
+        {
+          "muscle": "Flexor Carpi Radialis (Median C6-C7)",
+          "result": "2+ Fibs/PSWs"
+        },
+        {
+          "muscle": "Extensor Digitorum Communis (PIN C7-C8)",
+          "result": "2+ Fibs/PSWs"
+        },
+        {
+          "muscle": "Deltoid & Biceps (C5-C6)",
+          "result": "NORMAL (Upper trunk spared)"
+        },
+        {
+          "muscle": "APB & ADM (C8-T1)",
+          "result": "NORMAL (Lower trunk spared)"
+        },
+        {
+          "muscle": "Cervical Paraspinals",
+          "result": "NORMAL (Post-ganglionic lesion: spares dorsal rami)"
+        }
+      ],
+      "pearls": "Crucial localizing rule: Middle trunk lesion mimics C7 radiculopathy clinically, but on electrodiagnosis, Median D3 SNAP is reduced (postganglionic) and cervical paraspinals are normal (spared dorsal rami)."
+    },
+    {
+      "id": "radial-neuropathy",
+      "title": "Radial Neuropathy at Spiral Groove ('Saturday Night Palsy')",
+      "etiology": "Prolonged compression of radial nerve against humeral shaft (drunken sleep, crutch pressure, mid-humeral fracture).",
+      "anatomy": "Radial nerve at the mid-shaft spiral (radial) groove of the humerus.",
+      "clinicalPresentation": "Classic 'Wrist Drop' and 'Finger Drop': Inability to extend wrist, MCP joints, or thumb. Weakness of brachioradialis. TRICEPS STRENGTH IS NORMAL (branches to triceps arise proximal to spiral groove!).",
+      "sensoryLoss": "Superficial Radial territory: Dorsal aspect of first web space, dorsal thumb, index, and long fingers proximal to PIP joints.",
+      "ncsFindings": {
+        "lacSnap": "NORMAL",
+        "radialSensory": "ABSENT or markedly reduced (Superficial Radial SNAP)",
+        "medianSensoryD2": "NORMAL",
+        "mabcSnap": "NORMAL",
+        "ulnarSnap": "NORMAL",
+        "radialMotorEip": "Conduction block or marked amplitude drop across spiral groove",
+        "medianMotorApb": "NORMAL",
+        "ulnarMotorAdm": "NORMAL"
+      },
+      "emgFindings": [
+        {
+          "muscle": "Brachioradialis (Radial C5-C6)",
+          "result": "3+ Fibs/PSWs, reduced recruitment"
+        },
+        {
+          "muscle": "Extensor Carpi Radialis Longus (Radial C6-C7)",
+          "result": "3+ Fibs/PSWs"
+        },
+        {
+          "muscle": "Extensor Digitorum Communis (PIN C7-C8)",
+          "result": "3+ Fibs/PSWs"
+        },
+        {
+          "muscle": "Extensor Indicis Proprius (PIN C7-C8)",
+          "result": "3+ Fibs/PSWs"
+        },
+        {
+          "muscle": "Triceps Brachii (Radial C7-C8)",
+          "result": "NORMAL (KEY LOCALIZER: innervated proximal to spiral groove!)"
+        },
+        {
+          "muscle": "Deltoid (Axillary C5-C6)",
+          "result": "NORMAL (excludes Posterior Cord lesion)"
+        },
+        {
+          "muscle": "Latissimus Dorsi (Thoracodorsal C6-C8)",
+          "result": "NORMAL (excludes Posterior Cord lesion)"
+        }
+      ],
+      "pearls": "Triceps sparing is the gold standard for spiral groove localization! Normal Deltoid (Axillary) and Latissimus dorsi (Thoracodorsal) rule out a posterior cord lesion."
+    },
+    {
+      "id": "ulnar-neuropathy",
+      "title": "Ulnar Neuropathy at the Elbow (Cubital Tunnel Syndrome)",
+      "etiology": "Compression at retroepicondylar groove or humeroulnar aponeurotic arcade (Osborne's ligament).",
+      "anatomy": "Ulnar nerve as it passes posterior to the medial epicondyle into the cubital tunnel.",
+      "clinicalPresentation": "Numbness and tingling in the 5th digit and medial half of 4th digit. Weakness of finger abduction/adduction (interossei), pinch weakness (adductor pollicis), Froment's sign (+), and ulnar claw hand (4th & 5th digits).",
+      "sensoryLoss": "Palmar and dorsal medial hand, entire 5th digit and medial 4th digit (involves both palmar digital and Dorsal Ulnar Cutaneous - DUNC branches).",
+      "ncsFindings": {
+        "lacSnap": "NORMAL",
+        "radialSensory": "NORMAL",
+        "ulnarSnap": "ABSENT or markedly reduced (digit 5)",
+        "duncSnap": "ABSENT or reduced (dorsal ulnar cutaneous - proves lesion at/proximal to elbow!)",
+        "mabcSnap": "NORMAL (crucial: rules out lower trunk/medial cord)",
+        "medianSensoryD2": "NORMAL",
+        "ulnarMotorAdm": "Focal slowing > 10 m/s across elbow or conduction block > 20%",
+        "medianMotorApb": "NORMAL"
+      },
+      "emgFindings": [
+        {
+          "muscle": "First Dorsal Interosseous (Ulnar C8-T1)",
+          "result": "3+ Fibs/PSWs, reduced recruitment"
+        },
+        {
+          "muscle": "Abductor Digiti Minimi (Ulnar C8-T1)",
+          "result": "3+ Fibs/PSWs"
+        },
+        {
+          "muscle": "Flexor Digitorum Profundus 3/4 (Ulnar C8)",
+          "result": "1+ to 2+ Fibs/PSWs"
+        },
+        {
+          "muscle": "Flexor Carpi Ulnaris (Ulnar C8)",
+          "result": "Normal to 1+ Fibs (may be spared if compression is distal in tunnel)"
+        },
+        {
+          "muscle": "Abductor Pollicis Brevis (Median C8-T1)",
+          "result": "NORMAL (excludes Lower Trunk / Medial Cord)"
+        },
+        {
+          "muscle": "Extensor Indicis Proprius (Radial C8)",
+          "result": "NORMAL (excludes Lower Trunk)"
+        }
+      ],
+      "pearls": "DUNC SNAP & MABC SNAP: In Ulnar neuropathy at the elbow, DUNC SNAP is abnormal (unlike Guyon canal where DUNC is normal). MABC SNAP is NORMAL (unlike Lower Trunk/Medial Cord where MABC is abnormal)."
+    },
+    {
+      "id": "median-carpal-tunnel",
+      "title": "Carpal Tunnel Syndrome (CTS) vs Proximal Median Lesion",
+      "etiology": "Increased pressure in carpal tunnel under transverse carpal ligament; repetitive wrist motion, tenosynovitis, fluid retention.",
+      "anatomy": "Median nerve within the osteofibrous carpal tunnel at the wrist.",
+      "clinicalPresentation": "Nocturnal paresthesias in digits 1-3 and radial half of 4. Flick sign positive. Weakness of thumb abduction (APB) and opposition. Palmar thenar sensation is SPARED (palmar cutaneous branch passes over retinaculum).",
+      "sensoryLoss": "Volar aspects of thumb, index, middle finger, and radial ring finger. Palmar cutaneous thenar pad is spared.",
+      "ncsFindings": {
+        "lacSnap": "NORMAL",
+        "radialSensory": "NORMAL",
+        "medianSensoryD2": "Prolonged peak latency (> 3.5 ms) or transcarpal delay (> 0.4 ms vs ulnar)",
+        "mabcSnap": "NORMAL",
+        "ulnarSnap": "NORMAL",
+        "medianMotorApb": "Prolonged distal motor latency (> 4.2 ms), reduced CMAP in severe axonal loss",
+        "ulnarMotorAdm": "NORMAL"
+      },
+      "emgFindings": [
+        {
+          "muscle": "Abductor Pollicis Brevis (Median C8-T1)",
+          "result": "Fibs/PSWs and neurogenic MUAPs (in axonal/moderate-to-severe CTS)"
+        },
+        {
+          "muscle": "Opponens Pollicis (Median C8-T1)",
+          "result": "Fibs/PSWs in moderate-to-severe CTS"
+        },
+        {
+          "muscle": "Pronator Teres (Median C6-C7)",
+          "result": "NORMAL (excludes Pronator Teres syndrome & plexopathy)"
+        },
+        {
+          "muscle": "Flexor Pollicis Longus (AIN C8-T1)",
+          "result": "NORMAL (excludes Anterior Interosseous syndrome & proximal lesion)"
+        },
+        {
+          "muscle": "Abductor Digiti Minimi (Ulnar C8-T1)",
+          "result": "NORMAL"
+        },
+        {
+          "muscle": "Cervical Paraspinals",
+          "result": "NORMAL"
+        }
+      ],
+      "pearls": "Palmar cutaneous sparing is anatomical proof: Palmar cutaneous branch branches 5-6 cm proximal to the wrist and does NOT enter the carpal tunnel! If thenar eminence sensation is numb, look proximal to the wrist (Pronator syndrome or plexopathy)."
     }
   ],
   "caseQuiz": [

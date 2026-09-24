@@ -18,7 +18,7 @@ class EMGAudioEngine {
     this.isPlaying = false;
     this.currentMode = 'normal'; // 'normal', 'fibs', 'psws', 'myokymia', 'fascics', 'crd'
     this.timerId = null;
-    this.volume = 0.3;
+    this.volume = 0.75; // Audibly tuned default (75%)
     this.timebase = 10; // ms/div (total 10 divisions = 100 ms)
     this.gain = 50; // uV/div
     this.waveHistory = [];
@@ -87,28 +87,28 @@ class EMGAudioEngine {
     switch (this.currentMode) {
       case 'fibs':
         this.synthesizeFibrillation();
-        delay = 50 + Math.random() * 200; // 5 - 20 Hz irregular
+        delay = 60 + Math.random() * 180; // 5 - 16 Hz irregular clicking
         break;
       case 'psws':
         this.synthesizePSW();
-        delay = 70 + Math.random() * 220; // 4 - 15 Hz
+        delay = 80 + Math.random() * 200; // 4 - 12 Hz dull thumps
         break;
       case 'myokymia':
         this.synthesizeMyokymicBurst();
-        delay = 800 + Math.random() * 400; // 0.8 - 1.2s rhythmic grouping
+        delay = 900 + Math.random() * 300; // 1.0 - 1.2s rhythmic marching soldiers
         break;
       case 'fascics':
         this.synthesizeFasciculation();
-        delay = 500 + Math.random() * 2500; // very irregular 0.3 - 2 Hz
+        delay = 600 + Math.random() * 2400; // 0.3 - 1.5 Hz sporadic popcorn
         break;
       case 'crd':
         this.synthesizeCRD();
-        delay = 18; // ~55 Hz uninterrupted
+        delay = 22; // ~45 Hz continuous ephaptic buzzing
         break;
       case 'normal':
       default:
         this.synthesizeNormalMUAP();
-        delay = 60 + Math.random() * 40; // 10 - 15 Hz regular
+        delay = 70 + Math.random() * 30; // 10 - 14 Hz crisp firing
         break;
     }
 
@@ -120,37 +120,16 @@ class EMGAudioEngine {
   // --- SYNTHESIS ALGORITHMS ---
 
   synthesizeFibrillation() {
-    // High-frequency clicking 'rain on tin roof': 1-3 ms duration, 1000-2500 Hz
-    const now = this.audioCtx.currentTime;
+    // High-frequency clicking 'rain on tin roof': 1-3 ms duration, 1400-2400 Hz
+    const now = this.audioCtx.currentTime + 0.005;
     const osc = this.audioCtx.createOscillator();
     const g = this.audioCtx.createGain();
     
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(1200 + Math.random() * 800, now);
+    osc.frequency.setValueAtTime(1600 + Math.random() * 800, now);
     
     g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(this.volume * 0.9, now + 0.001);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.004);
-
-    osc.connect(g);
-    g.connect(this.gainNode);
-    osc.start(now);
-    osc.stop(now + 0.005);
-
-    this.recordWaveform('fib');
-  }
-
-  synthesizePSW() {
-    // Positive Sharp Wave: sharp dull 'thump': initial rapid drop then slow exponential decay
-    const now = this.audioCtx.currentTime;
-    const osc = this.audioCtx.createOscillator();
-    const g = this.audioCtx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(180 + Math.random() * 60, now);
-
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(this.volume * 1.0, now + 0.002);
+    g.gain.linearRampToValueAtTime(1.0, now + 0.001);
     g.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
 
     osc.connect(g);
@@ -158,14 +137,35 @@ class EMGAudioEngine {
     osc.start(now);
     osc.stop(now + 0.018);
 
+    this.recordWaveform('fib');
+  }
+
+  synthesizePSW() {
+    // Positive Sharp Wave: sharp dull 'thump': initial rapid drop then slow exponential decay
+    const now = this.audioCtx.currentTime + 0.005;
+    const osc = this.audioCtx.createOscillator();
+    const g = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(150 + Math.random() * 50, now);
+
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(1.0, now + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+
+    osc.connect(g);
+    g.connect(this.gainNode);
+    osc.start(now);
+    osc.stop(now + 0.040);
+
     this.recordWaveform('psw');
   }
 
   synthesizeMyokymicBurst() {
-    // Myokymia: 4-8 grouped potentials fired in rapid succession (30-50 Hz within burst)
-    const burstCount = 4 + Math.floor(Math.random() * 4);
-    const interval = 0.025; // 40 Hz inside burst
-    const now = this.audioCtx.currentTime;
+    // Myokymia: 5-8 grouped potentials fired in rapid succession (35-45 Hz within burst)
+    const burstCount = 5 + Math.floor(Math.random() * 3);
+    const interval = 0.024; // ~42 Hz inside burst
+    const now = this.audioCtx.currentTime + 0.005;
 
     for (let i = 0; i < burstCount; i++) {
       const t = now + i * interval;
@@ -173,79 +173,79 @@ class EMGAudioEngine {
       const g = this.audioCtx.createGain();
 
       osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(250, t);
+      osc.frequency.setValueAtTime(260 + (i % 2) * 40, t);
 
       g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(this.volume * 0.8, t + 0.002);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
+      g.gain.linearRampToValueAtTime(0.85, t + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.016);
 
       osc.connect(g);
       g.connect(this.gainNode);
       osc.start(t);
-      osc.stop(t + 0.015);
+      osc.stop(t + 0.018);
 
       setTimeout(() => this.recordWaveform('muap_burst'), i * interval * 1000);
     }
   }
 
   synthesizeFasciculation() {
-    // Fasciculation: Low frequency irregular pop
-    const now = this.audioCtx.currentTime;
+    // Fasciculation: Low-mid frequency irregular punchy pop
+    const now = this.audioCtx.currentTime + 0.005;
     const osc = this.audioCtx.createOscillator();
     const g = this.audioCtx.createGain();
 
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(140 + Math.random() * 40, now);
+    osc.frequency.setValueAtTime(160 + Math.random() * 60, now);
 
     g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(this.volume * 1.2, now + 0.004);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.030);
+    g.gain.linearRampToValueAtTime(1.1, now + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
 
     osc.connect(g);
     g.connect(this.gainNode);
     osc.start(now);
-    osc.stop(now + 0.035);
+    osc.stop(now + 0.050);
 
     this.recordWaveform('fascic');
   }
 
   synthesizeCRD() {
     // Complex repetitive discharge: High pitch continuous buzzing machine gun
-    const now = this.audioCtx.currentTime;
+    const now = this.audioCtx.currentTime + 0.005;
     const osc = this.audioCtx.createOscillator();
     const g = this.audioCtx.createGain();
 
     osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(320, now);
+    osc.frequency.setValueAtTime(280 + Math.random() * 20, now);
 
-    g.gain.setValueAtTime(this.volume * 0.45, now);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+    g.gain.setValueAtTime(0.65, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.018);
 
     osc.connect(g);
     g.connect(this.gainNode);
     osc.start(now);
-    osc.stop(now + 0.016);
+    osc.stop(now + 0.020);
 
     this.recordWaveform('crd');
   }
 
   synthesizeNormalMUAP() {
     // Normal Motor Unit Action Potential: Crisp thump/snappy sound
-    const now = this.audioCtx.currentTime;
+    const now = this.audioCtx.currentTime + 0.005;
     const osc = this.audioCtx.createOscillator();
     const g = this.audioCtx.createGain();
 
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(200 + Math.random() * 50, now);
+    osc.frequency.setValueAtTime(220 + Math.random() * 60, now);
 
     g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(this.volume * 0.7, now + 0.002);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
+    g.gain.linearRampToValueAtTime(0.9, now + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.020);
 
     osc.connect(g);
     g.connect(this.gainNode);
     osc.start(now);
-    osc.stop(now + 0.015);
+    osc.stop(now + 0.022);
 
     this.recordWaveform('normal');
   }

@@ -70,6 +70,7 @@
               <button class="root-filter-btn" data-root="C8">C8</button>
               <button class="root-filter-btn" data-root="T1">T1</button>
               <button class="btn btn-sm" id="btn-clear-filters">Reset Tracing</button>
+              <button class="btn btn-sm" id="btn-clear-lesion" style="color: #f87171; border-color: rgba(239,68,68,0.4); display: none;">✕ Clear Lesion / Normal View</button>
             </div>
             <div class="toolbar-group">
               <label style="font-size: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px;">
@@ -135,11 +136,15 @@
           <label for="scenario-select">🏥 SELECT CLINICAL SCENARIO / LESION:</label>
           <select id="scenario-select" class="custom-select">
             <option value="upper-trunk">Upper Trunk Plexopathy (Erb-Duchenne Palsy)</option>
+            <option value="middle-trunk">Middle Trunk Plexopathy (C7 Territory)</option>
             <option value="lower-trunk">Lower Trunk Plexopathy (Klumpke Palsy)</option>
-            <option value="neurogenic-tos">True Neurogenic Thoracic Outlet Syndrome (True TOS)</option>
             <option value="posterior-cord">Posterior Cord Lesion (Crutch / Dislocation)</option>
             <option value="lateral-cord">Lateral Cord Lesion (Axillary Surgery / Trauma)</option>
             <option value="medial-cord">Medial Cord Lesion (Catheterization / Trauma)</option>
+            <option value="radial-neuropathy">Radial Neuropathy at Spiral Groove (Saturday Night Palsy)</option>
+            <option value="ulnar-neuropathy">Ulnar Neuropathy at Elbow (Cubital Tunnel Syndrome)</option>
+            <option value="median-carpal-tunnel">Carpal Tunnel Syndrome (CTS) vs Proximal Median</option>
+            <option value="neurogenic-tos">True Neurogenic Thoracic Outlet Syndrome (True TOS)</option>
             <option value="radiation-vs-tumor">Radiation Plexopathy vs Neoplastic Plexopathy (Pancoast)</option>
             <option value="preganglionic-avulsion">Pre-Ganglionic Root Avulsion (Motorcycle Traction)</option>
           </select>
@@ -167,7 +172,7 @@
             <button class="btn" id="btn-emg-stop">⏹ Stop</button>
             <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted);">
               <span>Vol:</span>
-              <input type="range" id="emg-volume-slider" min="0" max="1" step="0.05" value="0.3" style="width: 70px;">
+              <input type="range" id="emg-volume-slider" min="0" max="1" step="0.05" value="0.75" style="width: 70px;">
             </div>
           </div>
         </div>

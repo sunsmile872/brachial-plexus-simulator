@@ -315,17 +315,26 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
+    function getScenarioForElement(targetId) {
+      const norm = (targetId || '').toLowerCase();
+      if (norm.includes('radial')) return 'radial-neuropathy';
+      if (norm.includes('ulnar')) return 'ulnar-neuropathy';
+      if (norm.includes('median')) return 'median-carpal-tunnel';
+      if (norm.includes('middle') || norm === 'root-c7' || norm.includes('c7')) return 'middle-trunk';
+      if (norm.includes('upper') || norm.includes('suprascapular') || norm.includes('subclavius') || norm.includes('c5') || norm.includes('c6')) return 'upper-trunk';
+      if (norm.includes('lower') || norm.includes('c8') || norm.includes('t1') || norm.includes('tos')) return 'lower-trunk';
+      if (norm.includes('posterior') || norm.includes('axillary') || norm.includes('subscapular') || norm.includes('thoracodorsal')) return 'posterior-cord';
+      if (norm.includes('lateral') || norm.includes('musculocutaneous')) return 'lateral-cord';
+      if (norm.includes('medial') || norm.includes('mabc')) return 'medial-cord';
+      if (norm.includes('thoracic') || norm.includes('dorsal-scapular') || norm.includes('avulsion')) return 'preganglionic-avulsion';
+      return 'upper-trunk';
+    }
+
     const quickLesionBtn = document.getElementById('btn-quick-lesion');
     if (quickLesionBtn) {
       quickLesionBtn.addEventListener('click', () => {
-        let scenarioId = 'upper-trunk';
-        if (id.includes('trunk-upper') || id.includes('c5') || id.includes('c6')) scenarioId = 'upper-trunk';
-        else if (id.includes('trunk-lower') || id.includes('c8') || id.includes('t1')) scenarioId = 'lower-trunk';
-        else if (id.includes('posterior')) scenarioId = 'posterior-cord';
-        else if (id.includes('lateral')) scenarioId = 'lateral-cord';
-        else if (id.includes('medial')) scenarioId = 'medial-cord';
-        
-        loadScenario(scenarioId);
+        const scenarioId = getScenarioForElement(id);
+        loadScenario(scenarioId, true);
         const simTab = document.querySelector('[data-target="tab-simulator"]');
         if (simTab) simTab.click();
       });
@@ -350,11 +359,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  const clearLesionBtn = document.getElementById('btn-clear-lesion');
+  if (clearLesionBtn) {
+    clearLesionBtn.addEventListener('click', () => {
+      if (svgRenderer) svgRenderer.clearLesion();
+      clearLesionBtn.style.display = 'none';
+    });
+  }
+
   const clearFilterBtn = document.getElementById('btn-clear-filters');
   if (clearFilterBtn) {
     clearFilterBtn.addEventListener('click', () => {
       filterBtns.forEach(b => b.classList.remove('active'));
-      if (svgRenderer) svgRenderer.clearFilter();
+      if (svgRenderer) {
+        svgRenderer.clearFilter();
+        svgRenderer.clearLesion();
+      }
+      if (clearLesionBtn) clearLesionBtn.style.display = 'none';
       inspectElement('trunk-upper');
     });
   }
@@ -370,17 +391,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const scenarioSelect = document.getElementById('scenario-select');
   if (scenarioSelect) {
     scenarioSelect.addEventListener('change', (e) => {
-      loadScenario(e.target.value);
+      loadScenario(e.target.value, true);
     });
   }
 
-  function loadScenario(scenarioId) {
+  function loadScenario(scenarioId, updateSvg = true) {
     if (!PLEXUS_DATA || !PLEXUS_DATA.clinicalScenarios) return;
     const scenario = PLEXUS_DATA.clinicalScenarios.find(s => s.id === scenarioId) || PLEXUS_DATA.clinicalScenarios[0];
     if (!scenario) return;
 
     if (scenarioSelect) scenarioSelect.value = scenario.id;
-    if (svgRenderer) svgRenderer.setLesion(scenario.id);
+    
+    if (updateSvg && svgRenderer) {
+      svgRenderer.setLesion(scenario.id);
+      if (clearLesionBtn) clearLesionBtn.style.display = 'inline-block';
+    } else if (!updateSvg && svgRenderer) {
+      svgRenderer.clearLesion();
+      if (clearLesionBtn) clearLesionBtn.style.display = 'none';
+    }
 
     // Update Clinical Presentation Card
     const infoContainer = document.getElementById('scenario-presentation-info');
@@ -473,17 +501,35 @@ document.addEventListener('DOMContentLoaded', () => {
   const volSlider = document.getElementById('emg-volume-slider');
   const waveBtns = document.querySelectorAll('.wave-btn');
 
+  function updateAudioButtonState(playing) {
+    if (!playBtn) return;
+    if (playing) {
+      playBtn.textContent = '⏹ Stop EMG Sound';
+      playBtn.classList.add('btn-success');
+    } else {
+      playBtn.textContent = '▶ Play EMG Sound';
+      playBtn.classList.remove('btn-success');
+    }
+  }
+
   if (playBtn) {
     playBtn.addEventListener('click', () => {
-      if (emgAudio) emgAudio.start();
-      playBtn.classList.add('btn-success');
+      if (emgAudio) {
+        if (emgAudio.isPlaying) {
+          emgAudio.stop();
+          updateAudioButtonState(false);
+        } else {
+          emgAudio.start();
+          updateAudioButtonState(true);
+        }
+      }
     });
   }
 
   if (stopBtn) {
     stopBtn.addEventListener('click', () => {
       if (emgAudio) emgAudio.stop();
-      if (playBtn) playBtn.classList.remove('btn-success');
+      updateAudioButtonState(false);
     });
   }
 
@@ -498,7 +544,10 @@ document.addEventListener('DOMContentLoaded', () => {
       waveBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const wave = btn.getAttribute('data-wave');
-      if (emgAudio) emgAudio.setMode(wave);
+      if (emgAudio) {
+        emgAudio.start(wave); // Auto-play immediately when waveform is selected!
+        updateAudioButtonState(true);
+      }
 
       const infoLabel = document.getElementById('wave-desc-text');
       if (infoLabel) {
@@ -809,7 +858,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // INITIAL RUNS
   if (PLEXUS_DATA.muscles) renderMuscleCards(PLEXUS_DATA.muscles);
-  loadScenario('upper-trunk');
+  loadScenario('upper-trunk', false); // Populate scenario data without putting a lesion pin on normal diagram!
+  if (svgRenderer) svgRenderer.clearLesion();
   inspectElement('trunk-upper');
   renderPeripheralNerve('median');
   renderRootTable();

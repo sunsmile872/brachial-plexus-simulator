@@ -26,12 +26,23 @@ class PlexusSVGRenderer {
 
   clearFilter() {
     this.activeFilter = null;
-    this.applyHighlighting();
+    this.clearLesion();
   }
 
   setLesion(lesionId) {
     this.activeLesion = lesionId;
+    const clearBtn = document.getElementById('btn-clear-lesion');
+    if (clearBtn) clearBtn.classList.remove('hidden');
     this.renderLesionIndicator();
+    this.applyHighlighting();
+  }
+
+  clearLesion() {
+    this.activeLesion = null;
+    const g = document.getElementById('svg-lesion-overlay');
+    if (g) g.innerHTML = '';
+    const clearBtn = document.getElementById('btn-clear-lesion');
+    if (clearBtn) clearBtn.classList.add('hidden');
     this.applyHighlighting();
   }
 
@@ -606,6 +617,22 @@ class PlexusSVGRenderer {
     let affectedRoots = [];
 
     switch (this.activeLesion) {
+      case 'middle-trunk':
+        coords = { x: 290, y: 310, label: 'Middle Trunk / C7 Lesion' };
+        affectedRoots = ['C7'];
+        break;
+      case 'radial-neuropathy':
+        coords = { x: 1030, y: 310, label: 'Radial Neuropathy (Spiral Groove / PIN)' };
+        affectedRoots = ['C5', 'C6', 'C7', 'C8'];
+        break;
+      case 'median-carpal-tunnel':
+        coords = { x: 1030, y: 400, label: 'Median Neuropathy (Carpal Tunnel / AIN)' };
+        affectedRoots = ['C6', 'C7', 'C8', 'T1'];
+        break;
+      case 'ulnar-neuropathy':
+        coords = { x: 1030, y: 485, label: 'Ulnar Neuropathy (Cubital Tunnel / Guyon)' };
+        affectedRoots = ['C8', 'T1'];
+        break;
       case 'upper-trunk':
         coords = { x: 305, y: 155, label: 'Upper Trunk Lesion (Erb-Duchenne)' };
         affectedRoots = ['C5', 'C6'];
