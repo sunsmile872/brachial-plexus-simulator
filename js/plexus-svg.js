@@ -228,15 +228,15 @@ class PlexusSVGRenderer {
 
           <!-- LATERAL ROOT OF MEDIAN NERVE (dives down from Lateral Cord to form Median 'M', y: 155 -> 400) -->
           <path id="path-median-lat-root" class="nerve-segment" data-id="term-median" data-roots="C5,C6,C7"
-            d="M 755 155 C 800 155, 820 400, 875 400" stroke="#fbbf24" stroke-width="8" fill="none" />
+            d="M 755 155 C 800 155, 820 400, 875 400" stroke="#10b981" stroke-width="8" fill="none" />
 
           <!-- MEDIAL ROOT OF MEDIAN NERVE (climbs up from Medial Cord to form Median 'M', y: 485 -> 400) -->
           <path id="path-median-med-root" class="nerve-segment" data-id="term-median" data-roots="C8,T1"
-            d="M 755 485 C 800 485, 820 400, 875 400" stroke="#fbbf24" stroke-width="8" fill="none" />
+            d="M 755 485 C 800 485, 820 400, 875 400" stroke="#10b981" stroke-width="8" fill="none" />
 
           <!-- COMMON MEDIAN NERVE TRUNK (continues horizontally y: 400) -->
           <path id="path-term-median" class="nerve-segment" data-id="term-median" data-roots="C5,C6,C7,C8,T1" data-level="terminal"
-            d="M 875 400 L 1020 400" stroke="#fbbf24" stroke-width="11" />
+            d="M 875 400 L 1020 400" stroke="#10b981" stroke-width="11" />
 
           <!-- ULNAR NERVE (continues straight out from Medial Cord, y: 485) -->
           <path id="path-term-ulnar" class="nerve-segment" data-id="term-ulnar" data-roots="C8,T1" data-level="terminal"
@@ -458,9 +458,9 @@ class PlexusSVGRenderer {
 
           <!-- Median ('M' junction) -->
           <g class="interactive-node terminal-node" data-id="term-median" transform="translate(1020, 400)">
-            <rect x="0" y="-18" width="185" height="36" rx="6" fill="#3f2b05" stroke="#f59e0b" stroke-width="2.5" />
-            <text x="92.5" y="-2" text-anchor="middle" fill="#fef3c7" font-size="12.5" font-weight="900">MEDIAN NERVE</text>
-            <text x="92.5" y="12" text-anchor="middle" fill="#fbbf24" font-size="9.5" font-weight="700">C5-T1 • "M" Shape • APB/PT</text>
+            <rect x="0" y="-18" width="185" height="36" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
+            <text x="92.5" y="-2" text-anchor="middle" fill="#e0f2fe" font-size="12.5" font-weight="900">MEDIAN NERVE</text>
+            <text x="92.5" y="12" text-anchor="middle" fill="#7dd3fc" font-size="9.5" font-weight="700">C5-T1 • "M" Shape • APB/PT</text>
           </g>
 
           <!-- Ulnar -->
@@ -525,9 +525,7 @@ class PlexusSVGRenderer {
       el.style.opacity = '1';
       el.style.strokeWidth = '';
       const id = el.getAttribute('data-id');
-      if (id === 'term-median' || el.id === 'path-median-lat-root' || el.id === 'path-median-med-root') {
-        el.style.stroke = '#fbbf24';
-      } else if (el.classList.contains('branch-line')) {
+      if (el.classList.contains('branch-line')) {
         el.style.stroke = '#34d399';
       } else if (el.getAttribute('data-division') === 'posterior') {
         el.style.stroke = '#059669';
