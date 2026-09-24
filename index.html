@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width="device-width, initial-scale=1.0">
+  <title>Brachial Plexus PM&R Clinical Anatomy & Electrodiagnostic Simulator</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-title">
+        <h1>BRACHIAL PLEXUS CLINICAL ANATOMY & ELECTRODIAGNOSTIC SUITE</h1>
+        <div class="brand-subtitle">Physical Medicine & Rehabilitation (PM&R) • NCS & Needle EMG Localization Engine</div>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-teal">Preston & Shapiro 4th Ed</span>
+      <span class="badge badge-root">Perotto EMG Guide 5th Ed</span>
+      <span class="badge badge-primary">Geeky Medics Topology</span>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="nav-tab-bar">
+    <button class="nav-tab-btn active" data-target="tab-diagram">
+      <span>🗺️</span> Interactive Plexus Diagram
+    </button>
+    <button class="nav-tab-btn" data-target="tab-simulator">
+      <span>⚡</span> NCS & EMG Lesion Simulator
+    </button>
+    <button class="nav-tab-btn" data-target="tab-muscles">
+      <span>📍</span> Perotto Needle EMG Atlas
+    </button>
+    <button class="nav-tab-btn" data-target="tab-algorithms">
+      <span>📊</span> Diagnostic Algorithms & Tables
+    </button>
+    <button class="nav-tab-btn" data-target="tab-quiz">
+      <span>📝</span> Board Review Case Challenges
+    </button>
+    <button class="nav-tab-btn" data-target="tab-poster">
+      <span>📄</span> A4 Medical Poster View
+    </button>
+  </nav>
+
+  <!-- Main Workspace -->
+  <main class="main-content">
+
+    <!-- ================= TAB 1: INTERACTIVE DIAGRAM ================= -->
+    <div id="tab-diagram" class="tab-pane active">
+      <div class="diagram-workspace">
+        
+        <!-- Left: Interactive SVG Canvas -->
+        <div class="diagram-main-area">
+          <div class="diagram-toolbar">
+            <div class="toolbar-group">
+              <span class="toolbar-label">Trace Root Pathway:</span>
+              <button class="root-filter-btn" data-root="C5">C5</button>
+              <button class="root-filter-btn" data-root="C6">C6</button>
+              <button class="root-filter-btn" data-root="C7">C7</button>
+              <button class="root-filter-btn" data-root="C8">C8</button>
+              <button class="root-filter-btn" data-root="T1">T1</button>
+              <button class="btn btn-sm" id="btn-clear-filters">Reset Tracing</button>
+            </div>
+            <div class="toolbar-group">
+              <label style="font-size: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" id="toggle-landmarks" checked> Show Anatomical Landmarks & Compartments
+              </label>
+            </div>
+          </div>
+
+          <div class="svg-canvas-wrapper" id="plexus-svg-container">
+            <!-- SVG injected dynamically by plexus-svg.js -->
+          </div>
+
+          <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text-muted);">
+            <div>💡 <em>Click any nerve root, trunk, division, cord, terminal or collateral branch to view detailed anatomy & EMG insertion points.</em></div>
+            <div style="display: flex; gap: 12px;">
+              <span><strong style="color:#10b981;">━</strong> Anterior / Main</span>
+              <span><strong style="color:#059669;">┅</strong> Posterior Divisions</span>
+              <span><strong style="color:#fbbf24;">━</strong> Median 'M' Junction</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Inspector Sidebar -->
+        <div class="diagram-sidebar">
+          <div class="info-card" id="element-details-card">
+            <div class="detail-header">
+              <span class="category-tag">SELECT AN ELEMENT</span>
+              <h3>Anatomy Inspector</h3>
+            </div>
+            <div class="detail-body">
+              <p class="desc">Click on any anatomical landmark or nerve pathway in the diagram to inspect its origins, target muscles, Perotto EMG landmarks, and clinical relevance.</p>
+            </div>
+          </div>
+
+          <!-- Quick Navigation Card -->
+          <div class="info-card">
+            <div class="detail-header">
+              <span class="category-tag">PMR CLINICAL QUICK ACCESS</span>
+              <h3>Key Entrapment Sites</h3>
+            </div>
+            <div class="detail-body" style="font-size: 12.5px;">
+              <ul style="list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 8px;">
+                <li><strong>• Interscalene Triangle:</strong> Roots C5-T1 between Anterior & Middle scalene muscles over 1st rib.</li>
+                <li><strong>• Suprascapular Notch:</strong> Nerve passes under transverse ligament; spins around spinoglenoid notch.</li>
+                <li><strong>• Costoclavicular Space:</strong> Lower trunk compression in True Neurogenic TOS.</li>
+                <li><strong>• Quadrangular Space:</strong> Axillary nerve & posterior circumflex humeral artery.</li>
+                <li><strong>• Radial / Spiral Groove:</strong> Radial nerve vulnerable to humeral shaft fractures.</li>
+                <li><strong>• Cubital Tunnel & Guyon Canal:</strong> Ulnar nerve entrapment sites.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ================= TAB 2: NCS & EMG SIMULATOR ================= -->
+    <div id="tab-simulator" class="tab-pane">
+      
+      <!-- Top Scenario Selector Bar -->
+      <div class="simulator-header-bar">
+        <div class="scenario-selector-wrap">
+          <label for="scenario-select">🏥 SELECT CLINICAL SCENARIO / LESION:</label>
+          <select id="scenario-select" class="custom-select">
+            <option value="upper-trunk">Upper Trunk Plexopathy (Erb-Duchenne Palsy)</option>
+            <option value="lower-trunk">Lower Trunk Plexopathy (Klumpke Palsy)</option>
+            <option value="neurogenic-tos">True Neurogenic Thoracic Outlet Syndrome (True TOS)</option>
+            <option value="posterior-cord">Posterior Cord Lesion (Crutch / Dislocation)</option>
+            <option value="lateral-cord">Lateral Cord Lesion (Axillary Surgery / Trauma)</option>
+            <option value="medial-cord">Medial Cord Lesion (Catheterization / Trauma)</option>
+            <option value="radiation-vs-tumor">Radiation Plexopathy vs Neoplastic Plexopathy (Pancoast)</option>
+            <option value="preganglionic-avulsion">Pre-Ganglionic Root Avulsion (Motorcycle Traction)</option>
+          </select>
+        </div>
+        <div class="scenario-badges">
+          <span class="badge badge-teal">Automatic EDX Pattern Mapping</span>
+        </div>
+      </div>
+
+      <!-- Presentation Info Card -->
+      <div class="table-card" id="scenario-presentation-info">
+        <!-- Injected via app.js -->
+      </div>
+
+      <!-- Real-Time EMG Audio & Oscilloscope Section -->
+      <div class="emg-oscilloscope-card">
+        <div class="oscilloscope-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">🔊</span>
+            <h4 style="font-size: 15px; font-weight: 800; color: #fff;">EMG Audio Synthesizer & Phosphor Oscilloscope</h4>
+            <span class="badge badge-green">Live Web Audio API</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="btn btn-primary" id="btn-emg-play">▶ Play EMG Sound</button>
+            <button class="btn" id="btn-emg-stop">⏹ Stop</button>
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted);">
+              <span>Vol:</span>
+              <input type="range" id="emg-volume-slider" min="0" max="1" step="0.05" value="0.3" style="width: 70px;">
+            </div>
+          </div>
+        </div>
+
+        <div class="oscilloscope-canvas-wrap">
+          <canvas id="emg-oscilloscope"></canvas>
+        </div>
+
+        <div class="oscilloscope-controls">
+          <div class="wave-selector-group">
+            <button class="wave-btn active" data-wave="normal">Normal Voluntary MUAP</button>
+            <button class="wave-btn" data-wave="fibs">Fibrillation Potentials ("Rain on Tin")</button>
+            <button class="wave-btn" data-wave="psws">Positive Sharp Waves ("Dull Thump")</button>
+            <button class="wave-btn" data-wave="myokymia">⭐ Myokymic Discharges (Radiation Hallmark)</button>
+            <button class="wave-btn" data-wave="fascics">Fasciculations ("Popcorn")</button>
+            <button class="wave-btn" data-wave="crd">Complex Repetitive Discharges (CRD)</button>
+          </div>
+        </div>
+        <div class="wave-desc-box" id="wave-desc-text">
+          Normal voluntary triphasic MUAP firing crisply during voluntary muscle contraction (10-15 Hz).
+        </div>
+      </div>
+
+      <!-- Simulator Side-by-Side Tables -->
+      <div class="simulator-layout">
+        
+        <!-- Left: NCS Table -->
+        <div class="table-card">
+          <div class="table-title">
+            <h4>⚡ Nerve Conduction Study (NCS) Profile</h4>
+            <span class="badge badge-teal">Sensory & Motor CMAP/SNAP</span>
+          </div>
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Nerve Study</th>
+                <th>Status</th>
+                <th>Findings & Amplitude</th>
+              </tr>
+            </thead>
+            <tbody id="scenario-ncs-tbody">
+              <!-- Injected by app.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Right: Needle EMG Table -->
+        <div class="table-card">
+          <div class="table-title">
+            <h4>📍 Needle Electromyography (EMG) Matrix</h4>
+            <span class="badge badge-root">Spontaneous & Recruitment</span>
+          </div>
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Tested Muscle (Nerve/Root)</th>
+                <th>EMG Denervation</th>
+                <th>Spontaneous Activity</th>
+              </tr>
+            </thead>
+            <tbody id="scenario-emg-tbody">
+              <!-- Injected by app.js -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= TAB 3: PEROTTO MUSCLE ATLAS ================= -->
+    <div id="tab-muscles" class="tab-pane">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Perotto & Delagi Needle EMG Muscle Atlas</h2>
+          <p style="color: var(--teal-light); font-size: 13px;">Anatomical landmark palpation, needle angle/depth, test activation maneuvers, and pneumothorax danger zones.</p>
+        </div>
+        <input type="text" id="muscle-search-input" class="search-input" placeholder="🔍 Search by muscle name, root (e.g. C5), nerve, or landmark...">
+      </div>
+
+      <div class="muscle-cards-grid" id="muscle-cards-grid">
+        <!-- Injected dynamically by app.js -->
+      </div>
+    </div>
+
+    <!-- ================= TAB 4: CLINICAL ALGORITHMS ================= -->
+    <div id="tab-algorithms" class="tab-pane">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 20px; font-weight: 800; color: #fff;">PM&R Electrodiagnostic Decision Trees & Differential Matrices</h2>
+        <p style="color: var(--teal-light); font-size: 13px;">Algorithmic approach based on Preston & Shapiro (4th Ed) and McLean EMG Guide.</p>
+      </div>
+
+      <!-- Pre vs Post Ganglionic Decision Box -->
+      <div class="table-card">
+        <div class="table-title">
+          <h4>🧠 Pre-Ganglionic (Root Avulsion / Radiculopathy) vs Post-Ganglionic (Plexopathy) Discrimination</h4>
+          <span class="badge badge-primary">The Core EMG Paradigm</span>
+        </div>
+        <div style="padding: 12px 0;">
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Diagnostic Parameter</th>
+                <th style="color: #38bdf8;">Pre-Ganglionic Lesion (Root Level)</th>
+                <th style="color: #34d399;">Post-Ganglionic Lesion (Plexus Level)</th>
+                <th>Physiologic Mechanism (Why?)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Sensory Nerve Action Potential (SNAP)</strong></td>
+                <td><span class="badge badge-green">NORMAL / PRESERVED</span></td>
+                <td><span class="badge badge-red">REDUCED or ABSENT</span></td>
+                <td>Sensory cell bodies reside in the DRG. Pre-ganglionic lesion leaves cell body intact, preventing distal Wallerian degeneration!</td>
+              </tr>
+              <tr>
+                <td><strong>Clinical Sensation in Dermatome</strong></td>
+                <td><span class="badge badge-red">NUMB / ANESTHETIC</span></td>
+                <td><span class="badge badge-red">NUMB / HYPOESTHETIC</span></td>
+                <td>Central disconnection causes clinical numbness in both, creating the "Pre-ganglionic Paradox" of normal SNAP with numb skin.</td>
+              </tr>
+              <tr>
+                <td><strong>Cervical Paraspinal Needle EMG</strong></td>
+                <td><span class="badge badge-red">DENERVATED (Fibs / PSWs)</span></td>
+                <td><span class="badge badge-green">COMPLETELY NORMAL</span></td>
+                <td>Dorsal primary rami branch off proximal to the plexus. Involvement confirms lesion at the spinal root/nerve level.</td>
+              </tr>
+              <tr>
+                <td><strong>Rhomboid & Serratus Anterior</strong></td>
+                <td><span class="badge badge-red">DENERVATED (if C5-C7 roots)</span></td>
+                <td><span class="badge badge-green">SPARED (Normal)</span></td>
+                <td>Dorsal Scapular & Long Thoracic nerves emerge directly from roots before trunk formation.</td>
+              </tr>
+              <tr>
+                <td><strong>Horner's Syndrome</strong></td>
+                <td>Frequent in T1 avulsion (sympathetics)</td>
+                <td>Rare (except Pancoast tumor direct spread)</td>
+                <td>T1 ventral root avulsion disrupts sympathetic preganglionic fibers destined for superior cervical ganglion.</td>
+              </tr>
+              <tr>
+                <td><strong>Surgical Recovery & Transfer</strong></td>
+                <td>Zero spontaneous recovery; needs urgent nerve transfer (Oberlin, spinal accessory)</td>
+                <td>Potential for graft repair / spontaneous neurotization depending on grade</td>
+                <td>Avulsion from spinal cord cannot regenerate spontaneously back into CNS.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Lower Trunk vs Ulnar Neuropathy vs C8 Radiculopathy -->
+      <div class="table-card mt-3">
+        <div class="table-title">
+          <h4>✋ Lower Trunk Plexopathy vs Ulnar Neuropathy at Elbow vs C8 Radiculopathy</h4>
+          <span class="badge badge-amber">High-Yield Board Triad</span>
+        </div>
+        <table class="clinical-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Lower Trunk Plexopathy</th>
+              <th>Ulnar Neuropathy at Elbow</th>
+              <th>C8 Radiculopathy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>MABC SNAP (Medial Forearm)</strong></td>
+              <td><span class="badge badge-red">ABSENT / REDUCED</span></td>
+              <td><span class="badge badge-green">NORMAL</span></td>
+              <td><span class="badge badge-green">NORMAL</span></td>
+            </tr>
+            <tr>
+              <td><strong>Ulnar SNAP (Digit 5)</strong></td>
+              <td><span class="badge badge-red">ABSENT / REDUCED</span></td>
+              <td><span class="badge badge-red">ABSENT / REDUCED</span></td>
+              <td><span class="badge badge-green">NORMAL</span></td>
+            </tr>
+            <tr>
+              <td><strong>Median APB Motor (Thenar)</strong></td>
+              <td><span class="badge badge-red">WEAK & ATROPHIED</span></td>
+              <td><span class="badge badge-green">NORMAL</span></td>
+              <td><span class="badge badge-red">WEAK (Mild-Mod)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Radial EIP / EDC (Extensors)</strong></td>
+              <td><span class="badge badge-red">DENERVATED (Radial C8)</span></td>
+              <td><span class="badge badge-green">NORMAL</span></td>
+              <td><span class="badge badge-red">DENERVATED</span></td>
+            </tr>
+            <tr>
+              <td><strong>Cervical Paraspinals</strong></td>
+              <td><span class="badge badge-green">NORMAL</span></td>
+              <td><span class="badge badge-green">NORMAL</span></td>
+              <td><span class="badge badge-red">DENERVATED (Fibs/PSWs)</span></td>
+            </tr>
+            <tr>
+              <td><strong>Classic Deformity / Sign</strong></td>
+              <td>Gilliatt-Sumner Hand (True TOS)</td>
+              <td>Froment sign, Claw 4th/5th</td>
+              <td>Neck pain radiating to medial hand</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Radiation vs Neoplastic Plexopathy Matrix -->
+      <div class="table-card mt-3">
+        <div class="table-title">
+          <h4>☢️ Radiation-Induced Plexopathy (RIPP) vs Neoplastic Plexopathy (NIPP)</h4>
+          <span class="badge badge-red">Cancer Patient Discrimination</span>
+        </div>
+        <table class="clinical-table">
+          <thead>
+            <tr>
+              <th>Clinical / EDX Metric</th>
+              <th>Radiation Plexopathy (RIPP)</th>
+              <th>Neoplastic Plexopathy (NIPP)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Pain Severity</strong></td>
+              <td>Mild or ABSENT; paresthesias dominate</td>
+              <td><span class="badge badge-red">SEVERE, INTRACTABLE PAIN</span></td>
+            </tr>
+            <tr>
+              <td><strong>Trunk Predilection</strong></td>
+              <td><strong>Superior (Upper) Trunk</strong> (Deltoid, Biceps)</td>
+              <td><strong>Inferior (Lower) Trunk</strong> (Hand Intrinsics)</td>
+            </tr>
+            <tr>
+              <td><strong>Horner's Syndrome</strong></td>
+              <td>Very rare</td>
+              <td>Common (T1 sympathetic chain invasion)</td>
+            </tr>
+            <tr>
+              <td><strong>Associated Sign</strong></td>
+              <td>Upper extremity lymphedema, radiation skin changes</td>
+              <td>Palpable axillary/supraclavicular mass, weight loss</td>
+            </tr>
+            <tr>
+              <td><strong>Needle EMG Hallmark</strong></td>
+              <td><span class="badge badge-green">⭐ MYOKYMIC DISCHARGES (20-70 Hz)</span></td>
+              <td>Fibrillations & PSWs; NO myokymia</td>
+            </tr>
+            <tr>
+              <td><strong>Onset Latency</strong></td>
+              <td>Slow, delayed (years after radiation)</td>
+              <td>Subacute, rapidly progressive (weeks/months)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- ================= TAB 5: BOARD REVIEW CASES ================= -->
+    <div id="tab-quiz" class="tab-pane">
+      <div style="margin-bottom: 24px;">
+        <h2 style="font-size: 20px; font-weight: 800; color: #fff;">PM&R Board Review: Interactive Case Challenges</h2>
+        <p style="color: var(--teal-light); font-size: 13px;">Test your electrodiagnostic reasoning on high-yield clinical vignettes.</p>
+      </div>
+
+      <div id="quiz-questions-container">
+        <!-- Injected by app.js -->
+      </div>
+    </div>
+
+    <!-- ================= TAB 6: A4 MEDICAL POSTER VIEW ================= -->
+    <div id="tab-poster" class="tab-pane">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+        <button class="btn btn-primary" id="btn-print-poster">🖨️ Print / Export A4 PDF Poster</button>
+      </div>
+
+      <div class="poster-container">
+        
+        <!-- Poster Header -->
+        <div class="poster-header">
+          <div class="poster-title">
+            <h2>THE BRACHIAL PLEXUS</h2>
+            <p>A CLINICAL NEUROANATOMY & ELECTRODIAGNOSTIC REFERENCE FOR PM&R PHYSICIANS</p>
+          </div>
+          <div style="text-align: right;">
+            <span class="badge badge-teal" style="font-size: 12px;">PM&R Board Guide</span>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Preston & Shapiro • Perotto</div>
+          </div>
+        </div>
+
+        <!-- Section 1: The 5-3-6-3-5 Schema -->
+        <div class="poster-section">
+          <div class="poster-section-title">
+            <span>📐</span> 1. Core Architectural Architecture (Roots • Trunks • Divisions • Cords • Terminals)
+          </div>
+          <div class="poster-grid-3col">
+            <div class="poster-card">
+              <h5>ROOTS (5) • Interscalene Triangle</h5>
+              <p><strong>C5, C6, C7, C8, T1</strong> exit between anterior & middle scalenes over 1st rib.</p>
+              <ul>
+                <li><strong>Dorsal Scapular (C5):</strong> Rhomboids, Levator scapulae.</li>
+                <li><strong>Long Thoracic (C5-7):</strong> Serratus anterior (winging).</li>
+                <li><strong>Phrenic (C3-5):</strong> Diaphragm anterior scalene.</li>
+              </ul>
+            </div>
+            <div class="poster-card">
+              <h5>TRUNKS (3) • Posterior Triangle</h5>
+              <p>Cross 1st rib behind subclavian artery. Erb's point at upper trunk.</p>
+              <ul>
+                <li><strong>Superior (C5-6):</strong> Suprascapular (Supraspinatus/Infraspinatus) & N. to Subclavius.</li>
+                <li><strong>Middle (C7):</strong> Pure continuation.</li>
+                <li><strong>Inferior (C8-T1):</strong> Crosses 1st rib (TOS site).</li>
+              </ul>
+            </div>
+            <div class="poster-card">
+              <h5>DIVISIONS (6) • Retroclavicular</h5>
+              <p>Posterior to middle 1/3 of clavicle. No extra collateral branches!</p>
+              <ul>
+                <li><strong>3 Anterior Divisions:</strong> Supply flexor compartments (join Lateral & Medial cords).</li>
+                <li><strong>3 Posterior Divisions:</strong> Supply extensor compartments (unite into Posterior cord).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="poster-grid-3col mt-3">
+            <div class="poster-card">
+              <h5>CORDS (3) • Axilla (2nd Part Axillary A.)</h5>
+              <p>Named by position relative to axillary artery under pec minor.</p>
+              <ul>
+                <li><strong>Lateral (C5-7):</strong> Lateral Pectoral (pec major clavicular).</li>
+                <li><strong>Posterior (C5-T1):</strong> Upper & Lower Subscapulars, Thoracodorsal (latissimus).</li>
+                <li><strong>Medial (C8-T1):</strong> Medial Pectoral, Med Cut Arm, MABC (C8-T1).</li>
+              </ul>
+            </div>
+            <div class="poster-card">
+              <h5>TERMINAL BRANCHES (5) • The "M" Shape</h5>
+              <p>Surround the 3rd part of the axillary artery.</p>
+              <ul>
+                <li><strong>Musculocutaneous (C5-7):</strong> Biceps, Brachialis; LAC sensory.</li>
+                <li><strong>Axillary (C5-6):</strong> Deltoid, Teres minor (quadrangular space).</li>
+                <li><strong>Radial (C5-T1):</strong> Triceps, Extensors, Superficial radial.</li>
+                <li><strong>Median (C5-T1):</strong> Formed by Lateral + Medial roots.</li>
+                <li><strong>Ulnar (C8-T1):</strong> All intrinsics, FCU, FDP 3/4.</li>
+              </ul>
+            </div>
+            <div class="poster-card" style="border-color: var(--accent-amber);">
+              <h5 style="color: var(--accent-amber);">⭐ CRITICAL PM&R LANDMARKS</h5>
+              <ul>
+                <li><strong>MABC SNAP:</strong> Gold standard for True TOS vs Ulnar neuropathy.</li>
+                <li><strong>Rhomboid / Serratus:</strong> Spared in postganglionic plexopathy; denervated in root avulsion.</li>
+                <li><strong>EIP Muscle (Radial C8):</strong> Distinguishes Lower Trunk (abnormal) from Medial Cord (spared!).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Clinical Syndromes Comparison -->
+        <div class="poster-section">
+          <div class="poster-section-title">
+            <span>⚡</span> 2. High-Yield Electrodiagnostic & Clinical Syndromes
+          </div>
+          <table class="clinical-table">
+            <thead>
+              <tr>
+                <th>Condition</th>
+                <th>Anatomical Level</th>
+                <th>Clinical Presentation</th>
+                <th>Diagnostic NCS / EMG Signature</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Erb-Duchenne Palsy</strong></td>
+                <td>Superior Trunk (C5-C6)</td>
+                <td>Waiter's Tip: adducted, internally rotated arm, extended elbow, pronated forearm. Absent biceps reflex.</td>
+                <td>Reduced LAC & Superficial Radial SNAP. Denervation in Deltoid, Biceps, Infraspinatus. Sparing of Rhomboid/Paraspinals.</td>
+              </tr>
+              <tr>
+                <td><strong>Klumpke Palsy</strong></td>
+                <td>Inferior Trunk (C8-T1)</td>
+                <td>True Claw Hand: weakness of all hand intrinsics, FDP, FPL. Horner's syndrome if T1 sympathetics disrupted.</td>
+                <td>Absent MABC and Ulnar SNAP. Low median/ulnar CMAPs. Denervation in APB, FDI, and Radial C8 (EIP).</td>
+              </tr>
+              <tr>
+                <td><strong>True Neurogenic TOS</strong></td>
+                <td>Lower Trunk / C8-T1 band</td>
+                <td>Gilliatt-Sumner Hand: severe thenar (APB) atrophy > hypothenar, aching medial forearm pain.</td>
+                <td>Absent MABC SNAP (most sensitive!). Attenuated median APB CMAP. Ulnar SNAP normal or mild.</td>
+              </tr>
+              <tr>
+                <td><strong>Radiation Plexopathy</strong></td>
+                <td>Superior Trunk (usually)</td>
+                <td>Painless weakness, paresthesias, lymphedema, years after axillary/breast radiation.</td>
+                <td>⭐ MYOKYMIC DISCHARGES (grouped 20-70 Hz spontaneous firing) on needle EMG.</td>
+              </tr>
+              <tr>
+                <td><strong>Pre-Ganglionic Root Avulsion</strong></td>
+                <td>Roots C5-T1 avulsed from cord</td>
+                <td>Flail, anesthetic limb, Horner's syndrome, severe neuropathic pain. Zero spontaneous recovery.</td>
+                <td>⭐ NORMAL SNAPs despite complete sensory anesthesia (Pre-ganglionic Paradox!). 4+ paraspinal denervation.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 3: Perotto Needle EMG High-Risk Precautions -->
+        <div class="poster-section">
+          <div class="poster-section-title">
+            <span>⚠️</span> 3. Needle EMG Landmark & Safety Matrix (Perotto Guide)
+          </div>
+          <div class="poster-grid-3col">
+            <div class="poster-card" style="border-left: 3px solid var(--accent-rose);">
+              <h5>Serratus Anterior (C5-C7)</h5>
+              <p><strong>Landmark:</strong> Mid-axillary line over 5th/6th rib, lateral to inferior scapular angle.</p>
+              <p class="text-danger"><strong>High Pneumothorax Risk:</strong> Angle needle strictly tangential onto the rib bone floor; NEVER enter intercostal spaces!</p>
+            </div>
+            <div class="poster-card" style="border-left: 3px solid var(--accent-rose);">
+              <h5>Rhomboids (C5 Root)</h5>
+              <p><strong>Landmark:</strong> Midway between spine and inferior angle of scapula, medial to vertebral border.</p>
+              <p class="text-danger"><strong>Pneumothorax Danger:</strong> Traverse trapezius with needle directed towards scapula, not deep into thorax.</p>
+            </div>
+            <div class="poster-card" style="border-left: 3px solid var(--teal-primary);">
+              <h5>Extensor Indicis Proprius (C7-C8)</h5>
+              <p><strong>Landmark:</strong> 2 fingerbreadths proximal to ulnar styloid on dorsal forearm, radial to ulna.</p>
+              <p style="color: var(--teal-bright);"><strong>Safe Landmark:</strong> Key radial C8 muscle that separates Lower Trunk from Medial Cord.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/plexus-data.js"></script>
+  <script src="js/emg-audio.js"></script>
+  <script src="js/plexus-svg.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
