@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let svgRenderer = null;
   let emgAudio = null;
+  let peripheralTreeVisualizer = null;
 
   // Initialize EMG Audio Engine safely
   try {
@@ -16,6 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch (err) {
     console.warn('EMG Audio initialization skipped:', err);
+  }
+
+  // Initialize Peripheral Tree Visualizer safely
+  try {
+    if (typeof PeripheralTreeVisualizer !== 'undefined') {
+      peripheralTreeVisualizer = new PeripheralTreeVisualizer('nerve-branches-detail-container');
+    }
+  } catch (err) {
+    console.warn('Peripheral Tree Visualizer initialization skipped:', err);
   }
 
   // --- TAB NAVIGATION (Priority 1) ---
@@ -569,101 +579,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const nerveDetailsContainer = document.getElementById('nerve-branches-detail-container');
 
   function renderPeripheralNerve(nerveKey) {
-    if (!nerveDetailsContainer || !PLEXUS_DATA.peripheralNervesDetail) return;
-    const data = PLEXUS_DATA.peripheralNervesDetail[nerveKey];
-    if (!data) return;
-
-    let html = `
-      <div class="info-card mb-3" style="border-left: 4px solid var(--teal-primary);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-          <div>
-            <h3 style="font-size: 20px; font-weight: 800; color: #fff;">${data.name}</h3>
-            <div style="font-size: 13px; color: var(--teal-light); margin-top: 2px;">
-              <strong>Spinal Roots:</strong> ${data.roots} &nbsp;|&nbsp; <strong>Origin:</strong> ${data.origin}
-            </div>
-          </div>
-          <span class="badge badge-teal" style="font-size: 12px;">Preston & Shapiro / Perotto Guide</span>
-        </div>
-        <p style="margin-top: 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;">
-          <strong>Anatomical Course:</strong> ${data.course}
-        </p>
-      </div>
-    `;
-
-    if (data.thaiMnemonic) {
-      html += `
-        <div class="mnemonic-banner">
-          <div>
-            <div class="mnemonic-tag">💡 THAI PM&R CLINICAL MEMORY MNEMONIC</div>
-            <div class="mnemonic-text">${data.thaiMnemonic}</div>
-          </div>
-          <div style="font-size: 12px; color: var(--text-secondary); margin-left: auto;">
-            <strong>โปร-ขอ-ปาล์ม-ดี</strong> = Elbow main trunk<br>
-            <strong>ดี-โป้ง-โป</strong> = AIN (lateral FDP, FPL, PQ)<br>
-            <strong>AFO</strong> = Thenar Recurrent (APB, FPB, OP)
-          </div>
-        </div>
-      `;
+    if (peripheralTreeVisualizer) {
+      peripheralTreeVisualizer.setNerve(nerveKey);
     }
-
-    html += `<div class="nerve-tree-container">`;
-    data.branchingSequence.forEach((step) => {
-      html += `
-        <div class="nerve-step-node">
-          <div class="step-node-header">
-            <div class="step-level-title">
-              <span>📍</span> ${step.level}
-            </div>
-            ${step.landmark ? `<span class="step-landmark-badge">${step.landmark}</span>` : ''}
-            ${step.mnemonic ? `<span class="badge badge-amber" style="font-size:12px;">คำจำ: ${step.mnemonic}</span>` : ''}
-          </div>
-          <div class="branches-grid">
-      `;
-
-      step.branches.forEach(br => {
-        let cardType = br.type === 'Motor' ? 'motor' : (br.type === 'Sensory' ? 'sensory' : 'entrapment-landmark');
-        html += `
-          <div class="branch-item-card ${cardType}">
-            <div class="branch-name">${br.name}</div>
-            <div class="branch-innervation">${br.innervation}</div>
-            ${br.notes ? `<div class="branch-note">${br.notes}</div>` : ''}
-            ${br.subBranches ? `
-              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1);">
-                <span style="font-size: 11px; font-weight:700; color: var(--teal-light);">Muscles Innervated:</span>
-                <ul style="padding-left: 16px; margin-top: 4px; font-size: 11.5px; color: var(--text-primary);">
-                  ${br.subBranches.map(sb => `<li><strong>${sb.name}:</strong> ${sb.muscle}</li>`).join('')}
-                </ul>
-              </div>
-            ` : ''}
-          </div>
-        `;
-      });
-
-      html += `</div></div>`;
-    });
-    html += `</div>`;
-
-    if (data.entrapments && data.entrapments.length > 0) {
-      html += `
-        <div class="table-card mt-3">
-          <div class="table-title">
-            <h4>⚠️ Key Clinical Entrapment Sites & PM&R Differential Points</h4>
-            <span class="badge badge-amber">Clinical Correlation</span>
-          </div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 10px;">
-            ${data.entrapments.map(e => `
-              <div class="entrapment-box">
-                <div class="entrapment-title">🛑 ${e.site}</div>
-                <div style="font-size: 11px; color: #f59e0b; font-weight:600; margin-bottom: 4px;">Etiology: ${e.cause}</div>
-                <div class="entrapment-desc">${e.clinical}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    nerveDetailsContainer.innerHTML = html;
   }
 
   nervePillBtns.forEach(btn => {

@@ -1794,6 +1794,7 @@ const PLEXUS_DATA = {
       "name": "Radial Nerve",
       "roots": "C5, C6, C7, C8 (± T1)",
       "origin": "Posterior Cord (Largest terminal branch)",
+      "thaiMnemonic": "ไตร - เบียร์ - แอล  |  PIN: สู้ - ดี - ยู - โป้ง - ชี้",
       "course": "Originates in axilla -> enters triangular interval with profunda brachii artery -> travels in spiral (radial) groove of humerus -> pierces lateral intermuscular septum -> enters anterior compartment above lateral epicondyle -> divides into Superficial Radial and PIN.",
       "entrapments": [
         {
@@ -1936,6 +1937,7 @@ const PLEXUS_DATA = {
       "name": "Ulnar Nerve",
       "roots": "C8, T1",
       "origin": "Medial Cord (terminal branch)",
+      "thaiMnemonic": "ยู - ดี  |  DUNC เหนือข้อมือ  |  Guyon: สั้น (PB) - ผิว (Sensory) - ลึก (All Hand Intrinsics)",
       "course": "Originates in axilla -> descends medial arm without giving branches -> pierces medial intermuscular septum -> passes posterior to medial epicondyle in ulnar groove -> enters cubital tunnel through humeroulnar arcade (Osborne ligament) between FCU heads -> descends between FCU and FDP -> passes through Guyon's canal into hand.",
       "entrapments": [
         {

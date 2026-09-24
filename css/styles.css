@@ -1204,3 +1204,476 @@ body {
   line-height: 1.45;
 }
 
+
+/* =========================================================================
+   PERIPHERAL NERVE STEM VISUAL DIAGRAM STYLES
+   ========================================================================= */
+
+.peripheral-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.view-toggle-group {
+  display: flex;
+  gap: 8px;
+}
+
+.peripheral-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.legend-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.legend-tag .dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.visual-tree-layout {
+  display: grid;
+  grid-template-columns: minmax(500px, 1.4fr) minmax(320px, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .visual-tree-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.visual-tree-canvas-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.tree-canvas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: rgba(15, 23, 42, 0.6);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.tree-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  display: block;
+}
+
+.tree-subtitle {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.tree-svg-wrapper {
+  padding: 16px;
+  background: radial-gradient(circle at 50% 30%, #0f172a 0%, #090d16 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.peripheral-stem-svg {
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+
+/* SVG Typography & Components */
+.comp-label {
+  font-size: 11px;
+  font-weight: 800;
+  fill: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.comp-sub {
+  font-size: 10px;
+  fill: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+}
+
+.svg-header-roots {
+  font-size: 13px;
+  font-weight: 800;
+  fill: #34d399;
+  letter-spacing: 0.5px;
+}
+
+.root-dot-lbl {
+  font-size: 9.5px;
+  font-weight: 700;
+  fill: #94a3b8;
+}
+
+.node-box {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  stroke-width: 1.5;
+}
+
+.node-box.motor {
+  fill: #064e3b;
+  stroke: #10b981;
+}
+
+.node-box.sensory {
+  fill: #78350f;
+  stroke: #f59e0b;
+}
+
+.node-box.autonomic {
+  fill: #0c4a6e;
+  stroke: #38bdf8;
+}
+
+.svg-branch-node:hover .node-box {
+  filter: brightness(1.3);
+  stroke-width: 2.5;
+}
+
+.node-title {
+  font-size: 12px;
+  font-weight: 700;
+  fill: #ffffff;
+  pointer-events: none;
+}
+
+.node-mnemonic {
+  font-size: 10.5px;
+  font-weight: 800;
+  fill: #34d399;
+  pointer-events: none;
+}
+
+.node-sub {
+  font-size: 9.5px;
+  fill: #cbd5e1;
+  pointer-events: none;
+}
+
+.node-txt {
+  font-size: 10px;
+  fill: #7dd3fc;
+  pointer-events: none;
+}
+
+/* Entrapment Pins */
+.svg-entrapment-pin {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.svg-entrapment-pin:hover {
+  transform: scale(1.1);
+}
+
+.pin-halo {
+  fill: rgba(239, 68, 68, 0.25);
+  stroke: #ef4444;
+  stroke-width: 1.5;
+  animation: pulsePin 2s infinite ease-in-out;
+}
+
+@keyframes pulsePin {
+  0% { r: 11; opacity: 0.9; }
+  50% { r: 15; opacity: 0.4; }
+  100% { r: 11; opacity: 0.9; }
+}
+
+.pin-core {
+  fill: #ef4444;
+}
+
+.pin-symbol {
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.pin-badge-box {
+  fill: rgba(15, 23, 42, 0.9);
+  stroke: #ef4444;
+  stroke-width: 1;
+}
+
+.pin-label {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #fca5a5;
+  pointer-events: none;
+}
+
+.pin-label-center {
+  font-size: 10.5px;
+  font-weight: 800;
+  fill: #fca5a5;
+  pointer-events: none;
+}
+
+.carpal-tunnel-band,
+.spiral-groove-band,
+.cubital-tunnel-band,
+.guyon-canal-band {
+  stroke: #ef4444;
+  stroke-dasharray: 4, 3;
+  stroke-width: 1.5;
+  fill: rgba(239, 68, 68, 0.12);
+}
+
+.hand-box-group {
+  fill: rgba(15, 23, 42, 0.65);
+  stroke: rgba(16, 185, 129, 0.3);
+  stroke-width: 1;
+}
+
+.hand-box-group.sensory {
+  stroke: rgba(245, 158, 11, 0.3);
+}
+
+.hand-group-title {
+  font-size: 11px;
+  font-weight: 800;
+  fill: #34d399;
+  letter-spacing: 0.5px;
+}
+
+.hand-group-title.sensory {
+  fill: #fbbf24;
+}
+
+/* Active Lesion Status Highlighting on SVG */
+.svg-branch-node.status-spared .node-box {
+  fill: rgba(16, 185, 129, 0.3) !important;
+  stroke: #34d399 !important;
+  stroke-width: 2.5;
+}
+
+.svg-branch-node.status-spared .node-title {
+  fill: #a7f3d0 !important;
+  font-weight: 800;
+}
+
+.svg-branch-node.status-involved .node-box {
+  fill: rgba(239, 68, 68, 0.2) !important;
+  stroke: #f87171 !important;
+  opacity: 0.65;
+}
+
+.svg-branch-node.status-involved .node-title {
+  fill: #fca5a5 !important;
+  text-decoration: line-through;
+}
+
+/* Sidebar Styles */
+.visual-tree-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mnemonic-card-box {
+  background: var(--bg-card);
+  border: 1px solid rgba(45, 212, 191, 0.25);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mnemonic-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.mnemonic-lead {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--teal-light);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.mnemonic-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mnemonic-row {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.05);
+}
+
+.mnemonic-word {
+  font-weight: 800;
+  color: #fbbf24;
+  min-width: 75px;
+}
+
+.mnemonic-arrow {
+  color: var(--text-muted);
+  margin: 0 6px;
+}
+
+.mnemonic-desc {
+  color: var(--text-primary);
+}
+
+.lesion-insight-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.lesion-insight-card.active-lesion {
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.15);
+}
+
+.lesion-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.7);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.lesion-card-body {
+  padding: 14px 16px;
+}
+
+.lesion-alert-banner {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #fca5a5;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.lesion-findings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .lesion-findings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.finding-box {
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+
+.finding-box.spared {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.finding-box.involved {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.finding-header {
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.finding-box.spared .finding-header {
+  color: #34d399;
+}
+
+.finding-box.involved .finding-header {
+  color: #f87171;
+}
+
+.finding-list {
+  padding-left: 14px;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.lesion-edx-pearls {
+  margin-top: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.pearl-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-bottom: 4px;
+}
+
+.lesion-edx-pearls p {
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.lesion-placeholder {
+  padding: 16px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.branch-inspector-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
