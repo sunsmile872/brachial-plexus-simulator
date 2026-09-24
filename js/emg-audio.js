@@ -296,8 +296,8 @@ class EMGAudioEngine {
     // Calibration markers
     this.ctx.fillStyle = '#34d399';
     this.ctx.font = '11px monospace';
-    this.ctx.fillText(, 10, 18);
-    this.ctx.fillText(, w - 160, 18);
+    this.ctx.fillText('10 ms/div | ' + this.gain + ' µV/div', 10, 18);
+    this.ctx.fillText('Mode: ' + this.currentMode.toUpperCase(), w - 160, 18);
   }
 
   animateOscilloscope() {

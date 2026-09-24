@@ -507,10 +507,12 @@ class PlexusSVGRenderer {
 
   applyHighlighting() {
     const allSegments = this.container.querySelectorAll('.nerve-segment');
+    const allNodes = this.container.querySelectorAll('.interactive-node');
+
     allSegments.forEach(el => {
       el.style.filter = '';
       el.style.opacity = '1';
-      // restore default color
+      el.style.strokeWidth = '';
       const id = el.getAttribute('data-id');
       if (id === 'term-median' || el.id === 'path-median-lat-root' || el.id === 'path-median-med-root') {
         el.style.stroke = '#fbbf24';
@@ -521,6 +523,11 @@ class PlexusSVGRenderer {
       } else {
         el.style.stroke = '#10b981';
       }
+    });
+
+    allNodes.forEach(node => {
+      node.style.opacity = '1';
+      node.style.filter = '';
     });
 
     if (!this.activeFilter && !this.activeLesion) return;
@@ -541,7 +548,26 @@ class PlexusSVGRenderer {
           el.style.filter = 'url(#glow-effect)';
           el.style.opacity = '1';
         } else {
-          el.style.opacity = '0.22';
+          el.style.opacity = '0.08';
+          el.style.stroke = '#1e293b';
+        }
+      });
+
+      allNodes.forEach(node => {
+        const id = node.getAttribute('data-id') || '';
+        let nodeMatch = false;
+        if (type === 'root') {
+          if (id === 'root-' + value.toLowerCase()) nodeMatch = true;
+          else {
+            const matchedSegment = this.container.querySelector();
+            if (matchedSegment) nodeMatch = true;
+          }
+        }
+        if (nodeMatch) {
+          node.style.opacity = '1';
+          node.style.filter = 'url(#glow-effect)';
+        } else {
+          node.style.opacity = '0.12';
         }
       });
     }
