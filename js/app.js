@@ -245,12 +245,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!item) return;
 
     // Check if Pure Sensory Nerve (NO MOTOR INNERVATION)
-    const isPureSensory = item.isSensory ||
+    const isPureSensory = (item.isSensory === true || 
                           item.id === 'med-cut-forearm' || 
                           item.id === 'med-cut-arm' || 
-                          item.id === 'intercostal-t1' || 
-                          item.name.toLowerCase().includes('cutaneous') ||
-                          (category === 'COLLATERAL BRANCH' && (!item.muscles || item.muscles.length === 0));
+                          item.id === 'intercostal-t1') &&
+                          item.id !== 'term-musculocutaneous';
 
     let musclesSection = '';
     if (isPureSensory) {
