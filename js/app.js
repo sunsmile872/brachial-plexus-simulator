@@ -445,4 +445,193 @@ document.addEventListener('DOMContentLoaded', () => {
   renderMuscleCards(PLEXUS_DATA.muscles);
   loadScenario('upper-trunk');
   inspectElement('trunk-upper');
+
+  // ==========================================
+  // TAB 3: PERIPHERAL NERVE ANATOMY CONTROLLER
+  // ==========================================
+  let activePeripheralNerve = 'median';
+  const nervePillBtns = document.querySelectorAll('.nerve-pill-btn');
+  const nerveDetailsContainer = document.getElementById('nerve-branches-detail-container');
+
+  function renderPeripheralNerve(nerveKey) {
+    if (!nerveDetailsContainer || !PLEXUS_DATA.peripheralNervesDetail) return;
+    const data = PLEXUS_DATA.peripheralNervesDetail[nerveKey];
+    if (!data) return;
+
+    let html = `
+      <div class="info-card mb-3" style="border-left: 4px solid var(--teal-primary);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h3 style="font-size: 20px; font-weight: 800; color: #fff;">${data.name}</h3>
+            <div style="font-size: 13px; color: var(--teal-light); margin-top: 2px;">
+              <strong>Spinal Roots:</strong> ${data.roots} &nbsp;|&nbsp; <strong>Origin:</strong> ${data.origin}
+            </div>
+          </div>
+          <span class="badge badge-teal" style="font-size: 12px;">Preston & Shapiro / Perotto Guide</span>
+        </div>
+        <p style="margin-top: 10px; font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;">
+          <strong>Anatomical Course:</strong> ${data.course}
+        </p>
+      </div>
+    `;
+
+    // Mnemonic if available
+    if (data.thaiMnemonic) {
+      html += `
+        <div class="mnemonic-banner">
+          <div>
+            <div class="mnemonic-tag">💡 THAI PM&R CLINICAL MEMORY MNEMONIC</div>
+            <div class="mnemonic-text">${data.thaiMnemonic}</div>
+          </div>
+          <div style="font-size: 12px; color: var(--text-secondary); margin-left: auto;">
+            <strong>โปร-ขอ-ปาล์ม-ดี</strong> = Elbow main trunk<br>
+            <strong>ดี-โป้ง-โป</strong> = AIN (lateral FDP, FPL, PQ)<br>
+            <strong>AFO</strong> = Thenar Recurrent (APB, FPB, OP)
+          </div>
+        </div>
+      `;
+    }
+
+    // Branching Tree
+    html += `<div class="nerve-tree-container">`;
+    data.branchingSequence.forEach((step, idx) => {
+      html += `
+        <div class="nerve-step-node">
+          <div class="step-node-header">
+            <div class="step-level-title">
+              <span>📍</span> ${step.level}
+            </div>
+            ${step.landmark ? `<span class="step-landmark-badge">${step.landmark}</span>` : ''}
+            ${step.mnemonic ? `<span class="badge badge-amber" style="font-size:12px;">คำจำ: ${step.mnemonic}</span>` : ''}
+          </div>
+          <div class="branches-grid">
+      `;
+
+      step.branches.forEach(br => {
+        let cardType = br.type === 'Motor' ? 'motor' : (br.type === 'Sensory' ? 'sensory' : 'entrapment-landmark');
+        html += `
+          <div class="branch-item-card ${cardType}">
+            <div class="branch-name">${br.name}</div>
+            <div class="branch-innervation">${br.innervation}</div>
+            ${br.notes ? `<div class="branch-note">${br.notes}</div>` : ''}
+            ${br.subBranches ? `
+              <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1);">
+                <span style="font-size: 11px; font-weight:700; color: var(--teal-light);">Muscles Innervated:</span>
+                <ul style="padding-left: 16px; margin-top: 4px; font-size: 11.5px; color: var(--text-primary);">
+                  ${br.subBranches.map(sb => `<li><strong>${sb.name}:</strong> ${sb.muscle}</li>`).join('')}
+                </ul>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+
+    // Clinical Entrapments Section
+    if (data.entrapments && data.entrapments.length > 0) {
+      html += `
+        <div class="table-card mt-3">
+          <div class="table-title">
+            <h4>⚠️ Key Clinical Entrapment Sites & PM&R Differential Points</h4>
+            <span class="badge badge-amber">Clinical Correlation</span>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 10px;">
+            ${data.entrapments.map(e => `
+              <div class="entrapment-box">
+                <div class="entrapment-title">🛑 ${e.site}</div>
+                <div style="font-size: 11px; color: #f59e0b; font-weight:600; margin-bottom: 4px;">Etiology: ${e.cause}</div>
+                <div class="entrapment-desc">${e.clinical}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    nerveDetailsContainer.innerHTML = html;
+  }
+
+  nervePillBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      nervePillBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activePeripheralNerve = btn.getAttribute('data-nerve');
+      renderPeripheralNerve(activePeripheralNerve);
+    });
+  });
+
+  // ==========================================
+  // TAB 4: ROOT DISTRIBUTION TABLE CONTROLLER
+  // ==========================================
+  const rootSearchInput = document.getElementById('root-dist-search');
+  const rootTableTbody = document.getElementById('root-dist-tbody');
+  const rootFilterSelector = document.getElementById('root-filter-select');
+  const rootMajorOnlyCheckbox = document.getElementById('root-major-only');
+
+  function renderRootTable() {
+    if (!rootTableTbody || !PLEXUS_DATA.rootDistributionTable) return;
+    const query = (rootSearchInput ? rootSearchInput.value : '').toLowerCase().trim();
+    const filterRoot = rootFilterSelector ? rootFilterSelector.value : 'all';
+    const majorOnly = rootMajorOnlyCheckbox ? rootMajorOnlyCheckbox.checked : false;
+
+    let filtered = PLEXUS_DATA.rootDistributionTable.filter(item => {
+      const matchQuery = item.muscle.toLowerCase().includes(query) || item.nerve.toLowerCase().includes(query);
+      if (!matchQuery) return false;
+
+      if (filterRoot !== 'all') {
+        const val = item[filterRoot.toLowerCase()];
+        if (majorOnly) {
+          return val === 'major';
+        } else {
+          return val === 'major' || val === 'minor';
+        }
+      }
+
+      if (majorOnly) {
+        return ['c1','c2','c3','c4','c5','c6','c7','c8','t1'].some(r => item[r] === 'major');
+      }
+
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      rootTableTbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding: 24px; color: var(--text-muted);">No muscles matched your search criteria.</td></tr>`;
+      return;
+    }
+
+    rootTableTbody.innerHTML = filtered.map(row => {
+      const formatCell = (val) => {
+        if (val === 'major') return `<span class="badge-major-root">X</span>`;
+        if (val === 'minor') return `<span class="badge-minor-root">X</span>`;
+        return `<span style="color: rgba(255,255,255,0.15);">-</span>`;
+      };
+
+      return `
+        <tr>
+          <td><strong style="color: #fff;">${row.muscle}</strong></td>
+          <td style="color: var(--teal-light); font-size: 11.5px;">${row.nerve}</td>
+          <td style="text-align:center;">${formatCell(row.c1)}</td>
+          <td style="text-align:center;">${formatCell(row.c2)}</td>
+          <td style="text-align:center;">${formatCell(row.c3)}</td>
+          <td style="text-align:center;">${formatCell(row.c4)}</td>
+          <td style="text-align:center;">${formatCell(row.c5)}</td>
+          <td style="text-align:center;">${formatCell(row.c6)}</td>
+          <td style="text-align:center;">${formatCell(row.c7)}</td>
+          <td style="text-align:center;">${formatCell(row.c8)}</td>
+          <td style="text-align:center;">${formatCell(row.t1)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  if (rootSearchInput) rootSearchInput.addEventListener('input', renderRootTable);
+  if (rootFilterSelector) rootFilterSelector.addEventListener('change', renderRootTable);
+  if (rootMajorOnlyCheckbox) rootMajorOnlyCheckbox.addEventListener('change', renderRootTable);
+
+  // Initial renders for new tabs
+  renderPeripheralNerve('median');
+  renderRootTable();
 });

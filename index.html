@@ -32,6 +32,12 @@
     <button class="nav-tab-btn" data-target="tab-simulator">
       <span>⚡</span> NCS & EMG Lesion Simulator
     </button>
+    <button class="nav-tab-btn" data-target="tab-nerve-branches">
+      <span>🌿</span> Peripheral Branches (Median / Ulnar / Radial)
+    </button>
+    <button class="nav-tab-btn" data-target="tab-root-dist">
+      <span>📊</span> Root Distribution Table (Part B)
+    </button>
     <button class="nav-tab-btn" data-target="tab-muscles">
       <span>📍</span> Perotto Needle EMG Atlas
     </button>
@@ -230,6 +236,92 @@
 
       </div>
 
+    </div>
+
+    <!-- ================= TAB: PERIPHERAL NERVE ANATOMY ================= -->
+    <div id="tab-nerve-branches" class="tab-pane">
+      <div style="margin-bottom: 20px;">
+        <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Peripheral Nerve Branching & Muscular Innervation</h2>
+        <p style="color: var(--teal-light); font-size: 13px;">Detailed anatomical course, entrapment landmarks (Arcade of Frohse, Spiral groove, Cubital tunnel, Guyon canal, Carpal tunnel), and named branches.</p>
+      </div>
+
+      <div class="nerve-pill-bar">
+        <button class="nerve-pill-btn active" data-nerve="median">
+          <span>🟡</span> Median Nerve (C5–T1)
+        </button>
+        <button class="nerve-pill-btn" data-nerve="ulnar">
+          <span>🔵</span> Ulnar Nerve (C8–T1)
+        </button>
+        <button class="nerve-pill-btn" data-nerve="radial">
+          <span>🟣</span> Radial Nerve (C5–C8)
+        </button>
+      </div>
+
+      <div id="nerve-branches-detail-container">
+        <!-- Injected dynamically by app.js -->
+      </div>
+    </div>
+
+    <!-- ================= TAB: ROOT DISTRIBUTION TABLE ================= -->
+    <div id="tab-root-dist" class="tab-pane">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 14px;">
+        <div>
+          <h2 style="font-size: 20px; font-weight: 800; color: #fff;">Spinal Nerve Root Innervation of Upper Extremity Muscles</h2>
+          <p style="color: var(--teal-light); font-size: 13px;">Appendix II Reference: Major (Primary) vs Minor-to-Moderate Root Distribution.</p>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <input type="text" id="root-dist-search" class="search-input" placeholder="🔍 Search muscle or nerve..." style="max-width: 250px;">
+          <select id="root-filter-select" class="custom-select" style="min-width: 140px; padding: 7px 10px;">
+            <option value="all">All Roots (C1-T1)</option>
+            <option value="c5">C5 Root</option>
+            <option value="c6">C6 Root</option>
+            <option value="c7">C7 Root</option>
+            <option value="c8">C8 Root</option>
+            <option value="t1">T1 Root</option>
+          </select>
+          <label style="font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <input type="checkbox" id="root-major-only"> Major Distribution Only
+          </label>
+        </div>
+      </div>
+
+      <!-- Legend Banner matching Textbook -->
+      <div class="root-table-legend">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="badge-major-root">X</span>
+          <strong>Major distribution (Primary myotomal innervation)</strong>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="badge-minor-root">X</span>
+          <span style="color: var(--text-secondary);">Minor-to-moderate distribution</span>
+        </div>
+        <div style="margin-left: auto; font-size: 11.5px; color: var(--text-muted);">
+          Total: 49 Upper Extremity Muscles
+        </div>
+      </div>
+
+      <div class="table-card" style="padding: 10px; overflow-x: auto;">
+        <table class="clinical-table" style="min-width: 900px;">
+          <thead>
+            <tr>
+              <th style="width: 280px;">Muscle</th>
+              <th style="width: 220px;">Peripheral Nerve</th>
+              <th style="text-align: center; width: 45px;">C1</th>
+              <th style="text-align: center; width: 45px;">C2</th>
+              <th style="text-align: center; width: 45px;">C3</th>
+              <th style="text-align: center; width: 45px;">C4</th>
+              <th style="text-align: center; width: 45px;">C5</th>
+              <th style="text-align: center; width: 45px;">C6</th>
+              <th style="text-align: center; width: 45px;">C7</th>
+              <th style="text-align: center; width: 45px;">C8</th>
+              <th style="text-align: center; width: 45px;">T1</th>
+            </tr>
+          </thead>
+          <tbody id="root-dist-tbody">
+            <!-- Injected by app.js -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ================= TAB 3: PEROTTO MUSCLE ATLAS ================= -->
