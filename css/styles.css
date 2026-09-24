@@ -216,10 +216,11 @@ body {
 }
 
 .root-filter-btn.active {
-  background: var(--teal-primary);
-  border-color: var(--teal-light);
-  color: var(--text-white);
-  box-shadow: 0 0 10px rgba(13, 148, 136, 0.4);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-color: #fbbf24;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.45);
 }
 
 .svg-canvas-wrapper {

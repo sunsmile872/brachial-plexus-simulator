@@ -503,11 +503,11 @@ class PlexusSVGRenderer {
   }
 
   highlightHovered(element) {
+    if (this.activeFilter) return; // Don't disrupt active root trace on hover
     const id = element.getAttribute('data-id');
-    const roots = element.getAttribute('data-roots');
     const matched = this.container.querySelectorAll(`[data-id="${id}"]`);
     matched.forEach(el => {
-      el.style.filter = 'url(#glow-effect)';
+      el.style.filter = 'none';
       el.style.stroke = '#38bdf8';
     });
   }
@@ -521,10 +521,9 @@ class PlexusSVGRenderer {
     const allNodes = this.container.querySelectorAll('.interactive-node');
 
     allSegments.forEach(el => {
-      el.style.filter = '';
+      el.style.filter = 'none';
       el.style.opacity = '1';
       el.style.strokeWidth = '';
-      const id = el.getAttribute('data-id');
       if (el.classList.contains('branch-line')) {
         el.style.stroke = '#34d399';
       } else if (el.getAttribute('data-division') === 'posterior') {
@@ -536,7 +535,19 @@ class PlexusSVGRenderer {
 
     allNodes.forEach(node => {
       node.style.opacity = '1';
-      node.style.filter = '';
+      node.style.filter = 'none';
+      const rect = node.querySelector('rect');
+      if (rect) {
+        rect.style.stroke = '';
+        rect.style.strokeWidth = '';
+        rect.style.fill = '';
+      }
+      const circle = node.querySelector('circle');
+      if (circle) {
+        circle.style.fill = '';
+        circle.style.stroke = '';
+        circle.style.strokeWidth = '';
+      }
     });
 
     if (!this.activeFilter && !this.activeLesion) return;
@@ -553,12 +564,17 @@ class PlexusSVGRenderer {
         }
 
         if (isMatch) {
-          el.style.stroke = '#38bdf8';
-          el.style.filter = 'url(#glow-effect)';
+          // Option 1: Electric Gold / Sharp Crisp Stroke (No fuzzy blur glow!)
+          el.style.stroke = '#fbbf24';
           el.style.opacity = '1';
+          el.style.filter = 'none';
+          const baseWidth = parseFloat(el.getAttribute('stroke-width') || '8');
+          el.style.strokeWidth = `${baseWidth + 2.5}px`;
         } else {
-          el.style.opacity = '0.08';
-          el.style.stroke = '#1e293b';
+          // Blueprint Ghosting: softly visible in background (0.22) so spatial anatomy is preserved
+          el.style.opacity = '0.22';
+          el.style.stroke = '#334155';
+          el.style.filter = 'none';
         }
       });
 
@@ -592,9 +608,22 @@ class PlexusSVGRenderer {
 
         if (nodeMatch) {
           node.style.opacity = '1';
-          node.style.filter = 'url(#glow-effect)';
+          node.style.filter = 'none';
+          const circle = node.querySelector('circle');
+          if (circle) {
+            circle.style.fill = '#d97706';
+            circle.style.stroke = '#fef08a';
+            circle.style.strokeWidth = '3px';
+          }
+          const rect = node.querySelector('rect');
+          if (rect) {
+            rect.style.stroke = '#fbbf24';
+            rect.style.strokeWidth = '2.5px';
+            rect.style.fill = '#2a1a04';
+          }
         } else {
-          node.style.opacity = '0.12';
+          node.style.opacity = '0.22';
+          node.style.filter = 'none';
         }
       });
     }
