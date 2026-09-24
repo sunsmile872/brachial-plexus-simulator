@@ -57,7 +57,7 @@ class PlexusSVGRenderer {
   render() {
     // Canvas dimensions: 1120 x 700
     const svgHTML = `
-      <svg id="brachial-plexus-svg" viewBox="0 0 1140 700" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <svg id="brachial-plexus-svg" viewBox="0 0 1240 700" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <filter id="glow-effect" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="4" result="blur" />
@@ -94,7 +94,7 @@ class PlexusSVGRenderer {
           </marker>
         </defs>
 
-        <rect width="1140" height="700" fill="#071426" rx="14" />
+        <rect width="1240" height="700" fill="#071426" rx="14" />
 
         <!-- Anatomical Section Column Headers -->
         <g id="column-headers" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#94a3b8" letter-spacing="1.5">
@@ -102,7 +102,7 @@ class PlexusSVGRenderer {
           <text x="285" y="42" text-anchor="middle">TRUNKS (3)</text>
           <text x="480" y="42" text-anchor="middle">DIVISIONS (6)</text>
           <text x="685" y="42" text-anchor="middle">CORDS (3)</text>
-          <text x="960" y="42" text-anchor="middle">TERMINAL BRANCHES (5)</text>
+          <text x="1010" y="42" text-anchor="middle">TERMINAL BRANCHES (5)</text>
           
           <line x1="185" y1="30" x2="185" y2="650" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4,4" />
           <line x1="385" y1="30" x2="385" y2="650" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4,4" />
@@ -436,38 +436,38 @@ class PlexusSVGRenderer {
 
           <!-- TERMINAL BRANCH LABELS -->
           <!-- Musculocutaneous -->
-          <g class="interactive-node terminal-node" data-id="term-musculocutaneous" transform="translate(1030, 155)">
-            <rect x="0" y="-16" width="180" height="32" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
-            <text x="90" y="-1" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="800">MUSCULOCUTANEOUS</text>
-            <text x="90" y="11" text-anchor="middle" fill="#7dd3fc" font-size="9.5">C5, C6, C7 • Biceps • LAC</text>
+          <g class="interactive-node terminal-node" data-id="term-musculocutaneous" transform="translate(1020, 155)">
+            <rect x="0" y="-16" width="185" height="32" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
+            <text x="92.5" y="-1" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="800">MUSCULOCUTANEOUS</text>
+            <text x="92.5" y="11" text-anchor="middle" fill="#7dd3fc" font-size="9.5">C5, C6, C7 • Biceps • LAC</text>
           </g>
 
           <!-- Axillary -->
-          <g class="interactive-node terminal-node" data-id="term-axillary" transform="translate(1030, 245)">
-            <rect x="0" y="-16" width="180" height="32" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
-            <text x="90" y="-1" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="800">AXILLARY NERVE</text>
-            <text x="90" y="11" text-anchor="middle" fill="#7dd3fc" font-size="9.5">C5, C6 • Deltoid • Quadrangular</text>
+          <g class="interactive-node terminal-node" data-id="term-axillary" transform="translate(1020, 245)">
+            <rect x="0" y="-16" width="185" height="32" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
+            <text x="92.5" y="-1" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="800">AXILLARY NERVE</text>
+            <text x="92.5" y="11" text-anchor="middle" fill="#7dd3fc" font-size="9.5">C5, C6 • Deltoid • Quadrangular</text>
           </g>
 
           <!-- Radial -->
-          <g class="interactive-node terminal-node" data-id="term-radial" transform="translate(1030, 310)">
-            <rect x="0" y="-16" width="180" height="32" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
-            <text x="90" y="-1" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="800">RADIAL NERVE</text>
-            <text x="90" y="11" text-anchor="middle" fill="#7dd3fc" font-size="9.5">C5-T1 • Extensors • Triceps</text>
+          <g class="interactive-node terminal-node" data-id="term-radial" transform="translate(1020, 310)">
+            <rect x="0" y="-16" width="185" height="32" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
+            <text x="92.5" y="-1" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="800">RADIAL NERVE</text>
+            <text x="92.5" y="11" text-anchor="middle" fill="#7dd3fc" font-size="9.5">C5-T1 • Extensors • Triceps</text>
           </g>
 
           <!-- Median ('M' junction) -->
-          <g class="interactive-node terminal-node" data-id="term-median" transform="translate(1030, 400)">
-            <rect x="0" y="-18" width="180" height="36" rx="6" fill="#3f2b05" stroke="#f59e0b" stroke-width="2.5" />
-            <text x="90" y="-2" text-anchor="middle" fill="#fef3c7" font-size="12.5" font-weight="900">MEDIAN NERVE</text>
-            <text x="90" y="12" text-anchor="middle" fill="#fbbf24" font-size="9.5" font-weight="700">C5-T1 • "M" Shape • APB/PT</text>
+          <g class="interactive-node terminal-node" data-id="term-median" transform="translate(1020, 400)">
+            <rect x="0" y="-18" width="185" height="36" rx="6" fill="#3f2b05" stroke="#f59e0b" stroke-width="2.5" />
+            <text x="92.5" y="-2" text-anchor="middle" fill="#fef3c7" font-size="12.5" font-weight="900">MEDIAN NERVE</text>
+            <text x="92.5" y="12" text-anchor="middle" fill="#fbbf24" font-size="9.5" font-weight="700">C5-T1 • "M" Shape • APB/PT</text>
           </g>
 
           <!-- Ulnar -->
-          <g class="interactive-node terminal-node" data-id="term-ulnar" transform="translate(1030, 485)">
-            <rect x="0" y="-16" width="180" height="32" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
-            <text x="90" y="-1" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="800">ULNAR NERVE</text>
-            <text x="90" y="11" text-anchor="middle" fill="#7dd3fc" font-size="9.5">C8, T1 • Intrinsics • FCU/ADM</text>
+          <g class="interactive-node terminal-node" data-id="term-ulnar" transform="translate(1020, 485)">
+            <rect x="0" y="-16" width="185" height="32" rx="6" fill="#082f49" stroke="#38bdf8" stroke-width="2" />
+            <text x="92.5" y="-1" text-anchor="middle" fill="#e0f2fe" font-size="11.5" font-weight="800">ULNAR NERVE</text>
+            <text x="92.5" y="11" text-anchor="middle" fill="#7dd3fc" font-size="9.5">C8, T1 • Intrinsics • FCU/ADM</text>
           </g>
 
         </g>
@@ -622,15 +622,15 @@ class PlexusSVGRenderer {
         affectedRoots = ['C7'];
         break;
       case 'radial-neuropathy':
-        coords = { x: 1030, y: 310, label: 'Radial Neuropathy (Spiral Groove / PIN)' };
+        coords = { x: 1020, y: 310, label: 'Radial Neuropathy (Spiral Groove / PIN)' };
         affectedRoots = ['C5', 'C6', 'C7', 'C8'];
         break;
       case 'median-carpal-tunnel':
-        coords = { x: 1030, y: 400, label: 'Median Neuropathy (Carpal Tunnel / AIN)' };
+        coords = { x: 1020, y: 400, label: 'Median Neuropathy (Carpal Tunnel / AIN)' };
         affectedRoots = ['C6', 'C7', 'C8', 'T1'];
         break;
       case 'ulnar-neuropathy':
-        coords = { x: 1030, y: 485, label: 'Ulnar Neuropathy (Cubital Tunnel / Guyon)' };
+        coords = { x: 1020, y: 485, label: 'Ulnar Neuropathy (Cubital Tunnel / Guyon)' };
         affectedRoots = ['C8', 'T1'];
         break;
       case 'upper-trunk':

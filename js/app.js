@@ -397,6 +397,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- ZOOM & PAN CONTROLS FOR BRACHIAL PLEXUS SVG ---
+  const zoomInBtn = document.getElementById('btn-plexus-zoom-in');
+  const zoomOutBtn = document.getElementById('btn-plexus-zoom-out');
+  const zoomResetBtn = document.getElementById('btn-plexus-zoom-reset');
+  let currentPlexusScale = 1.0;
+
+  function updatePlexusScale(scale, isReset = false) {
+    const svg = document.getElementById('brachial-plexus-svg');
+    if (!svg) return;
+    if (isReset) {
+      currentPlexusScale = 1.0;
+      svg.style.minWidth = '';
+      if (zoomResetBtn) zoomResetBtn.textContent = '🔍 Reset / Fit';
+    } else {
+      currentPlexusScale = Math.min(Math.max(scale, 0.7), 2.2);
+      svg.style.minWidth = `${Math.round(1140 * currentPlexusScale)}px`;
+      if (zoomResetBtn) zoomResetBtn.textContent = `🔍 ${Math.round(currentPlexusScale * 100)}%`;
+    }
+  }
+
+  if (zoomInBtn) {
+    zoomInBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      updatePlexusScale(currentPlexusScale + 0.2);
+    });
+  }
+  if (zoomOutBtn) {
+    zoomOutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      updatePlexusScale(currentPlexusScale - 0.2);
+    });
+  }
+  if (zoomResetBtn) {
+    zoomResetBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      updatePlexusScale(1.0, true);
+    });
+  }
+
   // --- SCENARIO SELECTOR (SIMULATOR TAB) ---
   const scenarioSelect = document.getElementById('scenario-select');
   if (scenarioSelect) {

@@ -225,14 +225,23 @@ body {
 .svg-canvas-wrapper {
   position: relative;
   width: 100%;
-  min-height: 580px;
+  min-height: 520px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   background: #061320;
   border-radius: var(--radius-md);
   border: 1px solid rgba(45, 212, 191, 0.15);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+#brachial-plexus-svg {
+  width: 100%;
+  max-width: 1240px;
+  height: auto;
+  transition: min-width 0.2s ease;
 }
 
 /* Sidebar Details Panel */
@@ -960,8 +969,8 @@ body {
   .clinical-table td { color: #1e293b !important; border-bottom: 1px solid #cbd5e1 !important; }
 }
 
-/* Responsive adjustments */
-@media (max-width: 1100px) {
+/* Responsive adjustments for iPad & Mobile */
+@media (max-width: 1250px) {
   .diagram-workspace {
     grid-template-columns: 1fr;
   }
@@ -970,6 +979,84 @@ body {
   }
   .poster-grid-3col {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .brand-title {
+    font-size: 15px;
+  }
+
+  .header-badges {
+    display: none;
+  }
+
+  .nav-tab-bar {
+    padding: 0 10px;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-tab-btn {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .main-content {
+    padding: 12px 10px;
+  }
+
+  .diagram-main-area {
+    padding: 10px 8px;
+  }
+
+  .diagram-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .toolbar-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .svg-canvas-wrapper {
+    min-height: auto;
+    justify-content: flex-start;
+    padding: 6px 4px;
+  }
+
+  #brachial-plexus-svg {
+    min-width: 860px;
+    height: 490px;
+  }
+
+  #plexus-mobile-indicator {
+    display: block !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .root-filter-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .diagram-main-area {
+    padding: 8px 4px;
+  }
+
+  #brachial-plexus-svg {
+    min-width: 820px;
+    height: 460px;
   }
 }
 
