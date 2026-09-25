@@ -576,6 +576,24 @@ class EMGAudioEngine {
         y = Math.sin(t * Math.PI * 8) * 35 + Math.sin(t * Math.PI * 16) * 12;
         break;
       }
+      case 'neuromyotonia': {
+        // Neuromyotonic Discharge (Isaacs' syndrome / Peripheral nerve hyperexcitability):
+        // Very high frequency discharge (150-300 Hz) with rapid repetitive spikes
+        // Narrow biphasic spike potential (1-2 ms duration)
+        if (t >= -0.45 && t <= 0.45) {
+          y = -Math.sin(t * Math.PI * 2.2) * 58 * Math.exp(-Math.pow(t * 3.8, 2));
+        }
+        break;
+      }
+      case 'cramp': {
+        // Muscle Cramp: Involuntary maximal multi-MUAP recruitment
+        // Dense overlapping asynchronous potentials of varying amplitudes (40-60 Hz)
+        const m1 = (t >= -0.55 && t <= 0.65) ? -Math.sin(t * Math.PI * 1.8) * 58 * Math.exp(-Math.pow(t * 2.2, 2)) : 0;
+        const m2 = ((t - 0.22) >= -0.45 && (t - 0.22) <= 0.5) ? Math.sin((t - 0.22) * Math.PI * 2.5) * 36 * Math.exp(-Math.pow((t - 0.22) * 3, 2)) : 0;
+        const m3 = ((t + 0.25) >= -0.45 && (t + 0.25) <= 0.5) ? -Math.sin((t + 0.25) * Math.PI * 3.0) * 28 * Math.exp(-Math.pow((t + 0.25) * 3.5, 2)) : 0;
+        y = m1 + m2 + m3;
+        break;
+      }
       default:
         y = 0;
     }
@@ -690,6 +708,8 @@ class EMGAudioEngine {
       else if (this.currentMode === 'fascics') waveType = 'fascic';
       else if (this.currentMode === 'myokymia') waveType = 'myokymia';
       else if (this.currentMode === 'myotonia') waveType = 'myotonia';
+      else if (this.currentMode === 'neuromyotonia') waveType = 'neuromyotonia';
+      else if (this.currentMode === 'cramp') waveType = 'cramp';
       else if (this.currentMode === 'crd') waveType = 'crd';
       else if (this.currentMode === 'normal_insertional') waveType = 'crd';
 
@@ -708,6 +728,14 @@ class EMGAudioEngine {
       } else if (waveType === 'myotonia') {
         cycleWidth = w / 6.0; // High frequency rapid volleys
         widthFactor = 0.40;
+      } else if (waveType === 'neuromyotonia') {
+        // Neuromyotonia: 150-300 Hz = ultra-rapid volley of 15-25 spikes across 100 ms
+        cycleWidth = w / 16.0;
+        widthFactor = 0.38;
+      } else if (waveType === 'cramp') {
+        // Cramp: 40-60 Hz dense multi-MUAP recruitment
+        cycleWidth = w / 4.5;
+        widthFactor = 0.32;
       }
 
       for (let x = 0; x < w; x += 2) {
@@ -720,11 +748,24 @@ class EMGAudioEngine {
         const modX = ((x + now * 0.08) % cycleWidth) - cycleWidth * 0.5;
         const normalizedT = modX / (cycleWidth * widthFactor);
 
-        const deflection = this.getPhysiologicalWaveform(activeWave, normalizedT) * audioMod;
+        let deflection = this.getPhysiologicalWaveform(activeWave, normalizedT) * audioMod;
+
+        if (activeWave === 'neuromyotonia') {
+          // Decrementing envelope across train burst (tapers smoothly in amplitude)
+          const burstPos = ((x + now * 0.12) % (w * 0.7)) / (w * 0.7);
+          const decrement = 0.3 + 0.7 * Math.exp(-burstPos * 2.5);
+          deflection *= decrement;
+        } else if (activeWave === 'cramp') {
+          // Dense multi-MUAP asynchronous overlap & active chaotic baseline interference
+          const denseOverlap = Math.sin(x * 0.18 + now * 0.05) * 16 + Math.cos(x * 0.11 - now * 0.03) * 12;
+          deflection += denseOverlap;
+        }
+
         y += deflection;
 
         // Baseline electrical noise (true needle electrode thermal resistance)
-        y += (Math.random() - 0.5) * 2.5;
+        const noiseAmp = (activeWave === 'cramp') ? 4.5 : 2.5;
+        y += (Math.random() - 0.5) * noiseAmp;
 
         if (x === 0) {
           this.ctx.moveTo(x, y);
