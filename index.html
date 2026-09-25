@@ -191,18 +191,32 @@
           <canvas id="emg-oscilloscope"></canvas>
         </div>
 
-        <div class="oscilloscope-controls">
-          <div class="wave-selector-group">
-            <button class="wave-btn active" data-wave="normal">Normal Voluntary MUAP</button>
+          <div class="audio-source-toggle" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; background: rgba(15, 23, 42, 0.6); padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary);">Audio Mode:</span>
+              <button class="btn btn-xs audio-mode-btn active" id="btn-audio-mode-real" data-mode="real">🎙️ Real Clinical Recordings (Kimura & Kohara / Clinical Atlas)</button>
+              <button class="btn btn-xs audio-mode-btn" id="btn-audio-mode-synth" data-mode="synth">🎛️ Real-time Web Audio Synthesizer</button>
+            </div>
+            <span class="badge badge-teal" id="audio-badge-status">Original Clinical Audio (Mastered AAC)</span>
+          </div>
+
+          <div class="wave-selector-group" id="wave-buttons-container">
+            <!-- Dynamically populated or switchable -->
+            <button class="wave-btn active" data-wave="normal">Normal MUAP (Biceps)</button>
+            <button class="wave-btn" data-wave="normal_insertional">Normal Insertional Activity</button>
             <button class="wave-btn" data-wave="fibs">Fibrillation Potentials ("Rain on Tin")</button>
             <button class="wave-btn" data-wave="psws">Positive Sharp Waves ("Dull Thump")</button>
+            <button class="wave-btn" data-wave="psw_to_fibs">PSW ➔ Fibrillations Transition</button>
+            <button class="wave-btn" data-wave="fascics">Fasciculations (Kimura F32)</button>
             <button class="wave-btn" data-wave="myokymia">⭐ Myokymic Discharges (Radiation Hallmark)</button>
-            <button class="wave-btn" data-wave="fascics">Fasciculations ("Popcorn")</button>
+            <button class="wave-btn" data-wave="myotonia">Myotonic Discharge ("Dive Bomber")</button>
+            <button class="wave-btn" data-wave="neuromyotonia">Neuromyotonic Discharge</button>
+            <button class="wave-btn" data-wave="cramp">Muscle Cramp Discharge</button>
             <button class="wave-btn" data-wave="crd">Complex Repetitive Discharges (CRD)</button>
           </div>
         </div>
         <div class="wave-desc-box" id="wave-desc-text">
-          Normal voluntary triphasic MUAP firing crisply during voluntary muscle contraction (10-15 Hz).
+          Normal voluntary triphasic MUAP firing crisply during voluntary muscle contraction (10-15 Hz). Real clinical recording from biceps brachii.
         </div>
       </div>
 

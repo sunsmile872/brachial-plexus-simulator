@@ -15,14 +15,34 @@ class EMGAudioEngine {
     this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
     this.audioCtx = null;
     this.gainNode = null;
+    this.analyser = null;
+    this.audioElement = null;
+    this.mediaSourceNode = null;
+    this.dataArray = null;
     this.isPlaying = false;
-    this.currentMode = 'normal'; // 'normal', 'fibs', 'psws', 'myokymia', 'fascics', 'crd'
+    this.playbackMode = 'real'; // 'real' (clinical recording) or 'synth' (Web Audio procedural)
+    this.currentMode = 'normal'; // 'normal', 'normal_insertional', 'fibs', 'psws', 'psw_to_fibs', 'fascics', 'myokymia', 'myotonia', 'neuromyotonia', 'cramp', 'crd'
     this.timerId = null;
     this.volume = 0.75; // Audibly tuned default (75%)
     this.timebase = 10; // ms/div (total 10 divisions = 100 ms)
     this.gain = 50; // uV/div
     this.waveHistory = [];
     this.sweepX = 0;
+
+    // Real Clinical Audio Catalog mapped from Google Drive recordings
+    this.audioManifest = {
+      normal: 'assets/audio/normal_biceps_muap.m4a',
+      normal_insertional: 'assets/audio/normal_insertional_activity.m4a',
+      fibs: 'assets/audio/fibrillation_potential.m4a',
+      psws: 'assets/audio/positive_sharp_waves.m4a',
+      psw_to_fibs: 'assets/audio/psw_to_fibs_transition.m4a',
+      fascics: 'assets/audio/fasciculation_potentials.m4a',
+      myokymia: 'assets/audio/myokymic_discharge.m4a',
+      myotonia: 'assets/audio/myotonic_discharge.m4a',
+      neuromyotonia: 'assets/audio/neuromyotonic_discharge.m4a',
+      cramp: 'assets/audio/cramp_discharge.m4a',
+      crd: null // procedurally synthesized
+    };
     
     if (this.canvas) {
       this.initCanvas();
@@ -42,10 +62,38 @@ class EMGAudioEngine {
       this.audioCtx = new AudioContext();
       this.gainNode = this.audioCtx.createGain();
       this.gainNode.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
-      this.gainNode.connect(this.audioCtx.destination);
+      
+      // Analyser for real-time waveform display
+      this.analyser = this.audioCtx.createAnalyser();
+      this.analyser.fftSize = 1024;
+      this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+
+      this.gainNode.connect(this.analyser);
+      this.analyser.connect(this.audioCtx.destination);
+
+      // Create audio element for real recording playback
+      this.audioElement = new Audio();
+      this.audioElement.loop = true;
+      this.audioElement.crossOrigin = 'anonymous';
+
+      // Connect HTMLAudio to Web Audio API graph
+      try {
+        this.mediaSourceNode = this.audioCtx.createMediaElementSource(this.audioElement);
+        this.mediaSourceNode.connect(this.gainNode);
+      } catch (e) {
+        console.warn('MediaElementSource initialization:', e);
+      }
     }
     if (this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
+    }
+  }
+
+  setPlaybackSource(mode) {
+    this.playbackMode = mode; // 'real' or 'synth'
+    if (this.isPlaying) {
+      this.stop();
+      this.start(this.currentMode);
     }
   }
 
@@ -53,6 +101,9 @@ class EMGAudioEngine {
     this.volume = Math.max(0, Math.min(1, val));
     if (this.gainNode && this.audioCtx) {
       this.gainNode.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
+    }
+    if (this.audioElement) {
+      this.audioElement.volume = this.volume;
     }
   }
 
@@ -68,7 +119,28 @@ class EMGAudioEngine {
     if (mode) this.currentMode = mode;
     this.initAudio();
     this.isPlaying = true;
-    this.scheduleNextDischarge();
+
+    const audioSrc = this.audioManifest[this.currentMode];
+    if (this.playbackMode === 'real' && audioSrc) {
+      // Real Clinical Recording Mode
+      if (this.timerId) {
+        clearTimeout(this.timerId);
+        this.timerId = null;
+      }
+      this.audioElement.src = audioSrc;
+      this.audioElement.currentTime = 0;
+      this.audioElement.play().catch(e => {
+        console.warn('Real audio playback fallback to synthesis:', e);
+        this.scheduleNextDischarge();
+      });
+    } else {
+      // Procedural Synthesis Mode
+      if (this.audioElement) {
+        this.audioElement.pause();
+      }
+      this.scheduleNextDischarge();
+    }
+
     this.animateOscilloscope();
   }
 
@@ -77,6 +149,9 @@ class EMGAudioEngine {
     if (this.timerId) {
       clearTimeout(this.timerId);
       this.timerId = null;
+    }
+    if (this.audioElement) {
+      this.audioElement.pause();
     }
   }
 
@@ -319,45 +394,58 @@ class EMGAudioEngine {
     this.ctx.shadowBlur = 6;
 
     this.ctx.beginPath();
-    this.ctx.moveTo(0, midY);
 
-    const now = Date.now();
-    for (let x = 0; x < w; x += 2) {
-      let y = midY;
-      // Check if any recent wave falls on this x pixel
-      const timeOffset = (w - x) * 1.5; // map x to time
-      
-      this.waveHistory.forEach(wave => {
-        const diff = now - wave.timestamp - timeOffset;
-        if (Math.abs(diff) < 20) {
-          const t = (diff + 20) / 40; // 0 to 1
-          if (wave.type === 'fib') {
-            // High-frequency biphasic spike: 20-100 uV, 2ms
-            y += Math.sin(t * Math.PI * 4) * Math.exp(-Math.pow((t - 0.5) * 5, 2)) * 38;
-          } else if (wave.type === 'psw') {
-            // Initial sharp positive downward, followed by slow negative upward
-            if (t < 0.3) {
-              y += (t / 0.3) * 45; // Downward in clinical EMG convention
-            } else {
-              y -= Math.exp(-(t - 0.3) * 4) * 20;
-            }
-          } else if (wave.type === 'muap_burst' || wave.type === 'normal') {
-            // Triphasic MUAP: small initial positive, large sharp negative peak, terminal positive
-            y += Math.sin(t * Math.PI * 2) * Math.exp(-Math.pow((t - 0.5) * 4, 2)) * 60;
-          } else if (wave.type === 'fascic') {
-            // Polyphasic large potential
-            y += (Math.sin(t * Math.PI * 6) + Math.cos(t * Math.PI * 2)) * 35;
-          } else if (wave.type === 'crd') {
-            // Uniform repetitive serrated pattern
-            y += Math.sin(x * 0.4) * 25;
-          }
+    // If playing real audio through AnalyserNode, draw live audio waveform
+    if (this.playbackMode === 'real' && this.analyser && this.dataArray && this.audioElement && !this.audioElement.paused) {
+      this.analyser.getByteTimeDomainData(this.dataArray);
+      const sliceWidth = w / this.dataArray.length;
+      let x = 0;
+      for (let i = 0; i < this.dataArray.length; i++) {
+        const v = this.dataArray[i] / 128.0; // 0 to 2, 1 is center
+        const y = v * midY;
+        if (i === 0) {
+          this.ctx.moveTo(x, y);
+        } else {
+          this.ctx.lineTo(x, y);
         }
-      });
+        x += sliceWidth;
+      }
+    } else {
+      // Procedural synthesizer waveform tracing
+      this.ctx.moveTo(0, midY);
+      const now = Date.now();
+      for (let x = 0; x < w; x += 2) {
+        let y = midY;
+        const timeOffset = (w - x) * 1.5;
+        
+        this.waveHistory.forEach(wave => {
+          const diff = now - wave.timestamp - timeOffset;
+          if (Math.abs(diff) < 20) {
+            const t = (diff + 20) / 40;
+            if (wave.type === 'fib') {
+              y += Math.sin(t * Math.PI * 4) * Math.exp(-Math.pow((t - 0.5) * 5, 2)) * 38;
+            } else if (wave.type === 'psw') {
+              if (t < 0.3) {
+                y += (t / 0.3) * 45;
+              } else {
+                y -= Math.exp(-(t - 0.3) * 4) * 20;
+              }
+            } else if (wave.type === 'muap_burst' || wave.type === 'normal') {
+              y += Math.sin(t * Math.PI * 2) * Math.exp(-Math.pow((t - 0.5) * 4, 2)) * 60;
+            } else if (wave.type === 'fascic') {
+              y += (Math.sin(t * Math.PI * 6) + Math.cos(t * Math.PI * 2)) * 35;
+            } else if (wave.type === 'crd') {
+              y += Math.sin(x * 0.4) * 25;
+            }
+          }
+        });
 
-      // Add tiny baseline noise
-      y += (Math.random() - 0.5) * 2.5;
-      this.ctx.lineTo(x, y);
+        // Add subtle phosphor trace baseline noise
+        y += (Math.random() - 0.5) * 2.5;
+        this.ctx.lineTo(x, y);
+      }
     }
+
     this.ctx.stroke();
     this.ctx.shadowBlur = 0;
 
