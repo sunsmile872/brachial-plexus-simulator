@@ -50,10 +50,16 @@ class EMGAudioEngine {
   }
 
   initCanvas() {
-    const width = this.canvas.parentElement ? this.canvas.parentElement.clientWidth : 600;
-    this.canvas.width = Math.max(width, 400);
-    this.canvas.height = 200;
-    this.drawGrid();
+    if (!this.canvas) {
+      this.canvas = document.getElementById('emg-oscilloscope');
+    }
+    if (this.canvas) {
+      this.ctx = this.canvas.getContext('2d');
+      const width = (this.canvas.parentElement && this.canvas.parentElement.clientWidth > 0) ? this.canvas.parentElement.clientWidth : 700;
+      this.canvas.width = Math.max(width, 400);
+      this.canvas.height = 200;
+      this.drawGrid();
+    }
   }
 
   initAudio() {
@@ -62,29 +68,14 @@ class EMGAudioEngine {
       this.audioCtx = new AudioContext();
       this.gainNode = this.audioCtx.createGain();
       this.gainNode.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
-      
-      // Analyser for real-time waveform display
-      this.analyser = this.audioCtx.createAnalyser();
-      this.analyser.fftSize = 1024;
-      this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-
-      this.gainNode.connect(this.analyser);
-      this.analyser.connect(this.audioCtx.destination);
+      this.gainNode.connect(this.audioCtx.destination);
 
       // Create audio element for real recording playback
       this.audioElement = new Audio();
       this.audioElement.loop = true;
       this.audioElement.volume = this.volume;
-
-      // Safe MediaElementSource connection with fallback
-      try {
-        this.mediaSourceNode = this.audioCtx.createMediaElementSource(this.audioElement);
-        this.mediaSourceNode.connect(this.gainNode);
-      } catch (e) {
-        console.warn('Direct HTMLAudio playback without MediaElementSource:', e);
-      }
     }
-    if (this.audioCtx.state === 'suspended') {
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
     }
   }
@@ -626,8 +617,14 @@ class EMGAudioEngine {
   }
 
   animateOscilloscope() {
-    if (!this.isPlaying) {
-      this.drawGrid();
+    if (!this.canvas) {
+      this.canvas = document.getElementById('emg-oscilloscope');
+    }
+    if (this.canvas && !this.ctx) {
+      this.ctx = this.canvas.getContext('2d');
+    }
+    if (!this.ctx || !this.isPlaying) {
+      if (this.ctx) this.drawGrid();
       return;
     }
 
@@ -661,18 +658,7 @@ class EMGAudioEngine {
       const relTime = (x - w * 0.45) / (w * 0.15); // normalized scale
 
       // Real audio energy modulation
-      let audioMod = 1.0;
-      if (this.playbackMode === 'real' && this.analyser && this.dataArray && this.audioElement && !this.audioElement.paused) {
-        this.analyser.getByteTimeDomainData(this.dataArray);
-        // Calculate instantaneous RMS envelope from audio
-        let sum = 0;
-        for (let i = 0; i < 64; i++) {
-          const val = (this.dataArray[i] - 128) / 128.0;
-          sum += val * val;
-        }
-        const rms = Math.sqrt(sum / 64);
-        audioMod = Math.min(2.5, Math.max(0.2, rms * 8.0));
-      }
+      const audioMod = (this.playbackMode === 'real' && this.audioElement && !this.audioElement.paused) ? 1.25 : 1.0;
 
       // Map wave mode to physiological shape
       let waveType = 'normal';
