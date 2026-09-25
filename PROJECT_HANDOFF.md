@@ -26,7 +26,7 @@
 The project is built on a pure **Vanilla Web Stack** (HTML5, Modern CSS3 with Flex/Grid, Modular ES6 JavaScript, SVG, and HTML5 Web Audio API). There is **zero build step**, zero npm bloat, and zero external framework overhead, ensuring 100% offline capability, instantaneous page loads, and seamless GitHub Pages deployment.
 
 ```
-/Users/ss/Gemini Antigravity/Playground/brachial-plexus-simulator/
+/Users/ss/Gemini Antigravity/Brachial plexus simulator/
 ├── index.html                  # Main responsive single-page application shell (8 tabs)
 ├── PROJECT_HANDOFF.md          # Full project context & session migration specification
 ├── README.md                   # Repository overview and quick start guide

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Auto-backup script for Brachial Plexus Simulator
-REPO_DIR="/Users/ss/Gemini Antigravity/Playground/brachial-plexus-simulator"
+REPO_DIR="/Users/ss/Gemini Antigravity/Brachial plexus simulator"
 LOG_FILE="$REPO_DIR/scripts/autobackup.log"
 
 cd "$REPO_DIR" || exit 1
