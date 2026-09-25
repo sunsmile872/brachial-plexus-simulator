@@ -606,27 +606,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Audio Source Mode Buttons (Real Clinical vs Synth)
-  const audioModeRealBtn = document.getElementById('btn-audio-mode-real');
-  const audioModeSynthBtn = document.getElementById('btn-audio-mode-synth');
-  const audioBadgeStatus = document.getElementById('audio-badge-status');
-
-  if (audioModeRealBtn && audioModeSynthBtn) {
-    audioModeRealBtn.addEventListener('click', () => {
-      audioModeRealBtn.classList.add('active');
-      audioModeSynthBtn.classList.remove('active');
-      if (audioBadgeStatus) audioBadgeStatus.textContent = 'Original Clinical Audio (Mastered AAC)';
-      if (emgAudio) emgAudio.setPlaybackSource('real');
-    });
-
-    audioModeSynthBtn.addEventListener('click', () => {
-      audioModeSynthBtn.classList.add('active');
-      audioModeRealBtn.classList.remove('active');
-      if (audioBadgeStatus) audioBadgeStatus.textContent = 'Web Audio Procedural Synthesizer';
-      if (emgAudio) emgAudio.setPlaybackSource('synth');
-    });
-  }
-
   waveBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const wave = btn.getAttribute('data-wave');

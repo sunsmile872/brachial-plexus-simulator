@@ -634,9 +634,8 @@ class EMGAudioEngine {
     this.ctx.font = '600 11px system-ui, -apple-system, monospace';
     this.ctx.fillText('10 ms/div  •  ' + gainVal + ' µV/div  •  [ - Up / + Down ]', 12, 18);
     
-    const sourceLabel = this.playbackMode === 'real' ? '🎙️ CLINICAL RECORDING' : '🎛️ SYNTHESIZER';
     this.ctx.fillStyle = '#38bdf8';
-    this.ctx.fillText(sourceLabel + ' | ' + (this.currentMode || 'NORMAL').toUpperCase(), Math.max(12, w - 240), 18);
+    this.ctx.fillText('🎙️ CLINICAL EMG | ' + (this.currentMode || 'NORMAL').toUpperCase(), Math.max(12, w - 240), 18);
   }
 
   animateOscilloscope() {
