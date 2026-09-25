@@ -745,26 +745,38 @@ class EMGAudioEngine {
           activeWave = (x < w * 0.5) ? 'psw' : 'fib';
         }
 
-        const modX = ((x + now * 0.08) % cycleWidth) - cycleWidth * 0.5;
-        const normalizedT = modX / (cycleWidth * widthFactor);
-
-        let deflection = this.getPhysiologicalWaveform(activeWave, normalizedT) * audioMod;
+        let deflection = 0;
 
         if (activeWave === 'neuromyotonia') {
-          // Decrementing envelope across train burst (tapers smoothly in amplitude)
-          const burstPos = ((x + now * 0.12) % (w * 0.7)) / (w * 0.7);
-          const decrement = 0.3 + 0.7 * Math.exp(-burstPos * 2.5);
-          deflection *= decrement;
+          // Neuromyotonia (150-300 Hz rapid repetitive volley):
+          // High-frequency repetitive spikes with a periodic amplitude decrementing burst envelope
+          const burstLen = w * 0.65;
+          const burstPhase = ((x + now * 0.14) % burstLen) / burstLen;
+          const decrement = 0.25 + 0.75 * Math.exp(-burstPhase * 2.8);
+          
+          const spikeCycle = w / 18.0; // 18 sharp spikes across screen (180 Hz!)
+          const spikeT = ((x + now * 0.07) % spikeCycle - spikeCycle * 0.5) / (spikeCycle * 0.32);
+          if (spikeT >= -0.5 && spikeT <= 0.5) {
+            deflection = (-Math.sin(spikeT * Math.PI * 2) * 65 * Math.exp(-Math.pow(spikeT * 3.4, 2))) * decrement * audioMod;
+          }
         } else if (activeWave === 'cramp') {
-          // Dense multi-MUAP asynchronous overlap & active chaotic baseline interference
-          const denseOverlap = Math.sin(x * 0.18 + now * 0.05) * 16 + Math.cos(x * 0.11 - now * 0.03) * 12;
-          deflection += denseOverlap;
+          // Muscle Cramp: Involuntary maximal multi-MUAP dense recruitment
+          // Multiple motor units firing asynchronously with turbulent baseline spasm (Full Interference Pattern)
+          const m1 = this.getPhysiologicalWaveform('muap', ((x + now * 0.12) % (w / 4.4) - (w / 8.8)) / ((w / 4.4) * 0.26));
+          const m2 = this.getPhysiologicalWaveform('muap', ((x + now * 0.08 + 70) % (w / 5.2) - (w / 10.4)) / ((w / 5.2) * 0.24)) * 0.85;
+          const m3 = this.getPhysiologicalWaveform('fib', ((x + now * 0.16 + 140) % (w / 3.6) - (w / 7.2)) / ((w / 3.6) * 0.14)) * 0.65;
+          const spasmFlutter = Math.sin(x * 0.16 + now * 0.05) * 18 + Math.cos(x * 0.26 - now * 0.04) * 14;
+          deflection = (m1 + m2 + m3) * 1.15 * audioMod + spasmFlutter;
+        } else {
+          const modX = ((x + now * 0.08) % cycleWidth) - cycleWidth * 0.5;
+          const normalizedT = modX / (cycleWidth * widthFactor);
+          deflection = this.getPhysiologicalWaveform(activeWave, normalizedT) * audioMod;
         }
 
         y += deflection;
 
         // Baseline electrical noise (true needle electrode thermal resistance)
-        const noiseAmp = (activeWave === 'cramp') ? 4.5 : 2.5;
+        const noiseAmp = (activeWave === 'cramp') ? 5.0 : 2.5;
         y += (Math.random() - 0.5) * noiseAmp;
 
         if (x === 0) {
