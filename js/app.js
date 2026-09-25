@@ -537,11 +537,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  const waveDescriptions = {
+    normal: 'Normal Voluntary MUAP (Biceps Brachii): Crisp triphasic motor unit potentials firing smoothly during voluntary contraction (10-15 Hz). [Real Clinical Recording]',
+    normal_insertional: 'Normal Insertional Activity: Brief (<300-500 ms) burst of high-frequency electrical activity provoked by needle electrode movement, ceasing immediately upon stopping.',
+    fibs: 'Fibrillation Potentials: High-pitched irregular clicking ("rain on a tin roof"), 1-3 ms duration, 1000-2500 Hz. Indicates active muscle fiber denervation. [Real Clinical Recording]',
+    psws: 'Positive Sharp Waves (PSWs): Distinctive dull "thump/pop" with sharp positive onset followed by slow negative decay. Hallmarks acute axonal denervation. [Real Clinical Recording]',
+    psw_to_fibs: 'Transition of Positive Sharp Waves to Fibrillations: Demonstrates morphological evolution between positive sharp waves and classic fibrillation spikes. [Kimura & Kohara]',
+    fascics: 'Fasciculation Potentials: Spontaneous irregular "popcorn" discharge of an entire motor unit. Pathologic in ALS / radiculopathy / plexopathy. [Kimura & Kohara F32]',
+    myokymia: '⭐ Myokymic Discharges: Spontaneous grouped repetitive firing (20-70 Hz within burst) recurring every 1-2 sec ("marching soldiers"). Pathognomonic for radiation-induced plexopathy! [Kimura & Kohara F34]',
+    myotonia: 'Myotonic Discharge: Waxing and waning frequency (20-150 Hz) and amplitude creating the classic "dive bomber" acoustic signature. [Kimura & Kohara F12]',
+    neuromyotonia: 'Neuromyotonic Discharges: Very high frequency (150-300 Hz) continuous motor unit discharges with progressive decrement ("pinging" metallic sound).',
+    cramp: 'Muscle Cramp Discharge: High-frequency (40-60 Hz) involuntary firing of multiple motor units during painful muscle contraction.',
+    crd: 'Complex Repetitive Discharges (CRD): Machine-gun like ephaptic firing (50-100 Hz), starts abruptly and stops abruptly without waning.'
+  };
+
   function updateAudioControls(mode) {
     const waveBtns = document.querySelectorAll('.wave-btn');
     waveBtns.forEach(btn => {
       btn.classList.toggle('active', btn.getAttribute('data-wave') === mode);
     });
+    const infoLabel = document.getElementById('wave-desc-text');
+    if (infoLabel && waveDescriptions[mode]) {
+      infoLabel.textContent = waveDescriptions[mode];
+    }
   }
 
   // --- EMG AUDIO CONTROLS ---
@@ -611,30 +629,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   waveBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      waveBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
       const wave = btn.getAttribute('data-wave');
+      updateAudioControls(wave);
       if (emgAudio) {
         emgAudio.start(wave); // Auto-play immediately when waveform is selected!
         updateAudioButtonState(true);
-      }
-
-      const infoLabel = document.getElementById('wave-desc-text');
-      if (infoLabel) {
-        const descs = {
-          normal: 'Normal Voluntary MUAP (Biceps Brachii): Crisp triphasic motor unit potentials firing smoothly during voluntary contraction (10-15 Hz). [Real Clinical Recording]',
-          normal_insertional: 'Normal Insertional Activity: Brief (<300-500 ms) burst of high-frequency electrical activity provoked by needle electrode movement, ceasing immediately upon stopping.',
-          fibs: 'Fibrillation Potentials: High-pitched irregular clicking ("rain on a tin roof"), 1-3 ms duration, 1000-2500 Hz. Indicates active muscle fiber denervation. [Real Clinical Recording]',
-          psws: 'Positive Sharp Waves (PSWs): Distinctive dull "thump/pop" with sharp positive onset followed by slow negative decay. Hallmarks acute axonal denervation. [Real Clinical Recording]',
-          psw_to_fibs: 'Transition of Positive Sharp Waves to Fibrillations: Demonstrates morphological evolution between positive sharp waves and classic fibrillation spikes. [Kimura & Kohara]',
-          fascics: 'Fasciculation Potentials: Spontaneous irregular "popcorn" discharge of an entire motor unit. Pathologic in ALS / radiculopathy / plexopathy. [Kimura & Kohara F32]',
-          myokymia: '⭐ Myokymic Discharges: Spontaneous grouped repetitive firing (20-70 Hz within burst) recurring every 1-2 sec ("marching soldiers"). Pathognomonic for radiation-induced plexopathy! [Kimura & Kohara F34]',
-          myotonia: 'Myotonic Discharge: Waxing and waning frequency (20-150 Hz) and amplitude creating the classic "dive bomber" acoustic signature. [Kimura & Kohara F12]',
-          neuromyotonia: 'Neuromyotonic Discharges: Very high frequency (150-300 Hz) continuous motor unit discharges with progressive decrement ("pinging" metallic sound).',
-          cramp: 'Muscle Cramp Discharge: High-frequency (40-60 Hz) involuntary firing of multiple motor units during painful muscle contraction.',
-          crd: 'Complex Repetitive Discharges (CRD): Machine-gun like ephaptic firing (50-100 Hz), starts abruptly and stops abruptly without waning.'
-        };
-        infoLabel.textContent = descs[wave] || '';
       }
     });
   });

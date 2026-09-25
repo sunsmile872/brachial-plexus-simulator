@@ -23,11 +23,26 @@ class EMGAudioEngine {
     this.playbackMode = 'real'; // 'real' (clinical recording) or 'synth' (Web Audio procedural)
     this.currentMode = 'normal'; // 'normal', 'normal_insertional', 'fibs', 'psws', 'psw_to_fibs', 'fascics', 'myokymia', 'myotonia', 'neuromyotonia', 'cramp', 'crd'
     this.timerId = null;
+    this.animFrameId = null;
     this.volume = 0.75; // Audibly tuned default (75%)
     this.timebase = 10; // ms/div (total 10 divisions = 100 ms)
     this.gain = 50; // uV/div
     this.waveHistory = [];
     this.sweepX = 0;
+
+    this.gainSettings = {
+      normal: 200,          // 200 uV/div
+      normal_insertional: 100, // 100 uV/div
+      fibs: 50,             // 50 uV/div
+      psws: 50,             // 50 uV/div
+      psw_to_fibs: 50,      // 50 uV/div
+      fascics: 200,         // 200 uV/div
+      myokymia: 100,        // 100 uV/div
+      myotonia: 100,        // 100 uV/div
+      neuromyotonia: 100,   // 100 uV/div
+      cramp: 500,           // 500 uV/div
+      crd: 100              // 100 uV/div
+    };
 
     // Real Clinical Audio Catalog mapped from Google Drive recordings
     this.audioManifest = {
@@ -55,8 +70,8 @@ class EMGAudioEngine {
     }
     if (this.canvas) {
       this.ctx = this.canvas.getContext('2d');
-      const width = (this.canvas.parentElement && this.canvas.parentElement.clientWidth > 0) ? this.canvas.parentElement.clientWidth : 700;
-      this.canvas.width = Math.max(width, 400);
+      const parentWidth = (this.canvas.parentElement && this.canvas.parentElement.clientWidth > 0) ? this.canvas.parentElement.clientWidth : 0;
+      this.canvas.width = parentWidth > 50 ? parentWidth : 700;
       this.canvas.height = 200;
       this.drawGrid();
     }
@@ -76,7 +91,7 @@ class EMGAudioEngine {
       this.audioElement.volume = this.volume;
     }
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume();
+      this.audioCtx.resume().catch(e => console.warn('AudioContext resume error:', e));
     }
   }
 
@@ -112,7 +127,12 @@ class EMGAudioEngine {
     this.isPlaying = true;
 
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume();
+      this.audioCtx.resume().catch(e => console.warn('AudioContext resume error:', e));
+    }
+
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
     }
 
     const audioSrc = this.audioManifest[this.currentMode];
@@ -123,15 +143,21 @@ class EMGAudioEngine {
         this.timerId = null;
       }
       if (this.audioElement) {
-        this.audioElement.src = audioSrc;
-        this.audioElement.currentTime = 0;
-        this.audioElement.volume = this.volume;
-        const playPromise = this.audioElement.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(e => {
-            console.warn('Real audio playback failed, falling back to procedural synth:', e);
-            this.scheduleNextDischarge();
-          });
+        try {
+          this.audioElement.pause();
+          this.audioElement.src = audioSrc;
+          this.audioElement.currentTime = 0;
+          this.audioElement.volume = this.volume;
+          const playPromise = this.audioElement.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(e => {
+              console.warn('Real audio playback failed, falling back to procedural synth:', e);
+              this.scheduleNextDischarge();
+            });
+          }
+        } catch (err) {
+          console.warn('Real audio error, falling back to synth:', err);
+          this.scheduleNextDischarge();
         }
       } else {
         this.scheduleNextDischarge();
@@ -139,7 +165,13 @@ class EMGAudioEngine {
     } else {
       // Procedural Synthesis Mode
       if (this.audioElement) {
-        this.audioElement.pause();
+        try {
+          this.audioElement.pause();
+        } catch (e) {}
+      }
+      if (this.timerId) {
+        clearTimeout(this.timerId);
+        this.timerId = null;
       }
       this.scheduleNextDischarge();
     }
@@ -153,9 +185,17 @@ class EMGAudioEngine {
       clearTimeout(this.timerId);
       this.timerId = null;
     }
-    if (this.audioElement) {
-      this.audioElement.pause();
+    if (this.animFrameId) {
+      cancelAnimationFrame(this.animFrameId);
+      this.animFrameId = null;
     }
+    if (this.audioElement) {
+      try {
+        this.audioElement.pause();
+        this.audioElement.currentTime = 0;
+      } catch (e) {}
+    }
+    this.drawGrid();
   }
 
   scheduleNextDischarge() {
@@ -443,36 +483,6 @@ class EMGAudioEngine {
     if (this.waveHistory.length > 50) this.waveHistory.shift();
   }
 
-  // --- OSCILLOSCOPE DRAWING ---
-
-  drawGrid() {
-    if (!this.ctx) return;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    
-    // Background dark medical phosphor CRT
-    this.ctx.fillStyle = '#061320';
-    this.ctx.fillRect(0, 0, w, h);
-
-    // Grid lines (10 horizontal, 10 vertical)
-    this.ctx.strokeStyle = 'rgba(13, 148, 136, 0.2)';
-    this.ctx.lineWidth = 1;
-
-    this.gainSettings = {
-      normal: 200,          // 200 uV/div
-      normal_insertional: 100, // 100 uV/div
-      fibs: 50,             // 50 uV/div
-      psws: 50,             // 50 uV/div
-      psw_to_fibs: 50,      // 50 uV/div
-      fascics: 200,         // 200 uV/div
-      myokymia: 100,        // 100 uV/div
-      myotonia: 100,        // 100 uV/div
-      neuromyotonia: 100,   // 100 uV/div
-      cramp: 500,           // 500 uV/div
-      crd: 100              // 100 uV/div
-    };
-  }
-
   // --- PHYSIOLOGICAL CLINICAL WAVEFORM CALCULATOR ---
   // Convention: Y is INVERTED on screen: Downward is POSITIVE (+), Upward is NEGATIVE (-)
   getPhysiologicalWaveform(type, t) {
@@ -573,7 +583,20 @@ class EMGAudioEngine {
   }
 
   drawGrid() {
+    if (!this.canvas) {
+      this.canvas = document.getElementById('emg-oscilloscope');
+    }
+    if (this.canvas && !this.ctx) {
+      this.ctx = this.canvas.getContext('2d');
+    }
     if (!this.ctx) return;
+    
+    // Auto-measure width if canvas is unmeasured or zero
+    if (this.canvas.width <= 0) {
+      const parentW = (this.canvas.parentElement && this.canvas.parentElement.clientWidth > 0) ? this.canvas.parentElement.clientWidth : 0;
+      this.canvas.width = parentW > 50 ? parentW : 700;
+      this.canvas.height = 200;
+    }
     const w = this.canvas.width;
     const h = this.canvas.height;
     
@@ -606,14 +629,14 @@ class EMGAudioEngine {
     this.ctx.stroke();
 
     // Calibration markers with strict PM&R electrodiagnostic conventions
-    const gainVal = this.gainSettings[this.currentMode] || 100;
+    const gainVal = (this.gainSettings && this.gainSettings[this.currentMode]) ? this.gainSettings[this.currentMode] : 100;
     this.ctx.fillStyle = '#34d399';
     this.ctx.font = '600 11px system-ui, -apple-system, monospace';
     this.ctx.fillText('10 ms/div  •  ' + gainVal + ' µV/div  •  [ - Up / + Down ]', 12, 18);
     
     const sourceLabel = this.playbackMode === 'real' ? '🎙️ CLINICAL RECORDING' : '🎛️ SYNTHESIZER';
     this.ctx.fillStyle = '#38bdf8';
-    this.ctx.fillText(sourceLabel + ' | ' + this.currentMode.toUpperCase(), w - 230, 18);
+    this.ctx.fillText(sourceLabel + ' | ' + (this.currentMode || 'NORMAL').toUpperCase(), Math.max(12, w - 240), 18);
   }
 
   animateOscilloscope() {
@@ -628,34 +651,34 @@ class EMGAudioEngine {
       return;
     }
 
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const midY = h / 2;
+    try {
+      if (this.canvas.width <= 0 || this.canvas.height <= 0) {
+        const parentW = (this.canvas.parentElement && this.canvas.parentElement.clientWidth > 0) ? this.canvas.parentElement.clientWidth : 0;
+        this.canvas.width = parentW > 50 ? parentW : 700;
+        this.canvas.height = 200;
+      }
 
-    this.drawGrid();
+      const w = this.canvas.width;
+      const h = this.canvas.height;
+      const midY = h / 2;
 
-    // High-resolution Phosphor Green Beam
-    this.ctx.strokeStyle = '#34d399';
-    this.ctx.lineWidth = 2.2;
-    this.ctx.shadowColor = '#10b981';
-    this.ctx.shadowBlur = 7;
+      this.drawGrid();
 
-    this.ctx.beginPath();
+      // High-resolution Phosphor Green Beam
+      this.ctx.strokeStyle = '#34d399';
+      this.ctx.lineWidth = 2.2;
+      this.ctx.shadowColor = '#10b981';
+      this.ctx.shadowBlur = 7;
 
-    const now = Date.now();
+      this.ctx.beginPath();
 
-    // Standardized Clinical Triggered EMG Sweep
-    // Timebase = 100 ms full screen (10 ms/div)
-    const sweepDuration = 1200; // ms for sweep loop across canvas
-    const sweepProgress = (now % sweepDuration) / sweepDuration;
-    const currentBeamX = sweepProgress * w;
+      const now = Date.now();
 
-    // Build physiological trace synchronized to real audio or procedural triggers
-    for (let x = 0; x < w; x += 2) {
-      let y = midY;
-
-      // Extract time relative to screen center
-      const relTime = (x - w * 0.45) / (w * 0.15); // normalized scale
+      // Standardized Clinical Triggered EMG Sweep
+      // Timebase = 100 ms full screen (10 ms/div)
+      const sweepDuration = 1200; // ms for sweep loop across canvas
+      const sweepProgress = (now % sweepDuration) / sweepDuration;
+      const currentBeamX = sweepProgress * w;
 
       // Real audio energy modulation
       const audioMod = (this.playbackMode === 'real' && this.audioElement && !this.audioElement.paused) ? 1.25 : 1.0;
@@ -664,7 +687,7 @@ class EMGAudioEngine {
       let waveType = 'normal';
       if (this.currentMode === 'fibs') waveType = 'fib';
       else if (this.currentMode === 'psws') waveType = 'psw';
-      else if (this.currentMode === 'psw_to_fibs') waveType = (x < w * 0.5) ? 'psw' : 'fib';
+      else if (this.currentMode === 'psw_to_fibs') waveType = 'psw';
       else if (this.currentMode === 'fascics') waveType = 'fascic';
       else if (this.currentMode === 'myokymia') waveType = 'myokymia';
       else if (this.currentMode === 'myotonia') waveType = 'myotonia';
@@ -684,39 +707,51 @@ class EMGAudioEngine {
         cycleWidth = w / 2.6;
         widthFactor = 0.24;
       } else if (waveType === 'myotonia') {
-        cycleWidth = w / 7.0; // High frequency rapid volleys
-        widthFactor = 0.45;
+        cycleWidth = w / 6.0; // High frequency rapid volleys
+        widthFactor = 0.40;
       }
 
-      const modX = ((x + now * 0.08) % cycleWidth) - cycleWidth * 0.5;
-      const normalizedT = modX / (cycleWidth * widthFactor);
+      for (let x = 0; x < w; x += 2) {
+        let y = midY;
+        let activeWave = waveType;
+        if (this.currentMode === 'psw_to_fibs') {
+          activeWave = (x < w * 0.5) ? 'psw' : 'fib';
+        }
 
-      const deflection = this.getPhysiologicalWaveform(waveType, normalizedT) * audioMod;
-      y += deflection;
+        const modX = ((x + now * 0.08) % cycleWidth) - cycleWidth * 0.5;
+        const normalizedT = modX / (cycleWidth * widthFactor);
 
-      // Baseline electrical noise (true needle electrode thermal resistance)
-      y += (Math.random() - 0.5) * 3.0;
+        const deflection = this.getPhysiologicalWaveform(activeWave, normalizedT) * audioMod;
+        y += deflection;
 
-      if (x === 0) {
-        this.ctx.moveTo(x, y);
-      } else {
-        this.ctx.lineTo(x, y);
+        // Baseline electrical noise (true needle electrode thermal resistance)
+        y += (Math.random() - 0.5) * 2.5;
+
+        if (x === 0) {
+          this.ctx.moveTo(x, y);
+        } else {
+          this.ctx.lineTo(x, y);
+        }
       }
+
+      this.ctx.stroke();
+
+      // Render moving phosphor beam head
+      this.ctx.fillStyle = '#6ee7b7';
+      this.ctx.shadowBlur = 12;
+      this.ctx.shadowColor = '#34d399';
+      this.ctx.beginPath();
+      this.ctx.arc(currentBeamX, midY, 3.5, 0, Math.PI * 2);
+      this.ctx.fill();
+
+      this.ctx.shadowBlur = 0;
+    } catch (err) {
+      console.error('Oscilloscope render error:', err);
     }
 
-    this.ctx.stroke();
-
-    // Render moving phosphor beam head
-    this.ctx.fillStyle = '#6ee7b7';
-    this.ctx.shadowBlur = 12;
-    this.ctx.shadowColor = '#34d399';
-    this.ctx.beginPath();
-    this.ctx.arc(currentBeamX, midY, 3, 0, Math.PI * 2);
-    this.ctx.fill();
-
-    this.ctx.shadowBlur = 0;
-
-    requestAnimationFrame(() => this.animateOscilloscope());
+    if (this.isPlaying) {
+      this.animFrameId = requestAnimationFrame(() => this.animateOscilloscope());
+    }
   }
 }
 
