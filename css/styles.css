@@ -1575,14 +1575,14 @@ body {
   pointer-events: none;
 }
 
-/* Entrapment Pins */
+/* Entrapment Pins (Flicker-Free, No Transform Scale) */
 .svg-entrapment-pin {
   cursor: pointer;
-  transition: transform 0.2s ease;
 }
 
-.svg-entrapment-pin:hover {
-  transform: scale(1.1);
+.svg-entrapment-pin text {
+  pointer-events: none;
+  user-select: none;
 }
 
 .pin-halo {
@@ -1590,6 +1590,7 @@ body {
   stroke: #ef4444;
   stroke-width: 1.5;
   animation: pulsePin 2s infinite ease-in-out;
+  pointer-events: none;
 }
 
 @keyframes pulsePin {
@@ -1600,6 +1601,7 @@ body {
 
 .pin-core {
   fill: #ef4444;
+  pointer-events: none;
 }
 
 .pin-symbol {
@@ -1609,17 +1611,25 @@ body {
 
 .pin-pill-box {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: filter 0.2s ease, stroke-width 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
   filter: drop-shadow(0 2px 8px rgba(239, 68, 68, 0.45));
 }
 
-.pin-pill-box:hover {
-  filter: drop-shadow(0 0 14px rgba(239, 68, 68, 0.9)) brightness(1.25);
-  stroke-width: 2.5;
+.svg-entrapment-pin:hover .pin-pill-box {
+  filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.95)) brightness(1.25);
+  stroke: #ffffff !important;
+  stroke-width: 2.5 !important;
 }
 
 .svg-entrapment-pin:active .pin-pill-box {
-  transform: scale(0.98);
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)) brightness(0.95);
+}
+
+.svg-entrapment-pin.active .pin-pill-box {
+  fill: #dc2626 !important;
+  stroke: #fef08a !important;
+  stroke-width: 2.5 !important;
+  filter: drop-shadow(0 0 18px rgba(239, 68, 68, 0.95));
 }
 
 .pin-label-center {
