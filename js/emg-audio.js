@@ -162,15 +162,36 @@ class EMGAudioEngine {
     switch (this.currentMode) {
       case 'fibs':
         this.synthesizeFibrillation();
-        delay = 60 + Math.random() * 180; // 5 - 16 Hz irregular clicking
+        delay = 50 + Math.random() * 120; // 8 - 20 Hz irregular clicking
         break;
       case 'psws':
         this.synthesizePSW();
-        delay = 80 + Math.random() * 200; // 4 - 12 Hz dull thumps
+        delay = 70 + Math.random() * 160; // 5 - 14 Hz dull thumps
+        break;
+      case 'psw_to_fibs':
+        if (Math.random() > 0.5) this.synthesizePSW();
+        else this.synthesizeFibrillation();
+        delay = 60 + Math.random() * 140;
         break;
       case 'myokymia':
         this.synthesizeMyokymicBurst();
-        delay = 900 + Math.random() * 300; // 1.0 - 1.2s rhythmic marching soldiers
+        delay = 800 + Math.random() * 300; // 1.0 - 1.1s rhythmic marching soldiers
+        break;
+      case 'myotonia':
+        this.synthesizeMyotonia();
+        delay = 1800; // Recurrent dive-bomber revving every 1.8s
+        break;
+      case 'neuromyotonia':
+        this.synthesizeNeuromyotonia();
+        delay = 15; // 60-150 Hz continuous pinging
+        break;
+      case 'cramp':
+        this.synthesizeCrampDischarge();
+        delay = 18 + Math.random() * 10; // 40-50 Hz dense motor firing
+        break;
+      case 'normal_insertional':
+        this.synthesizeInsertionalActivity();
+        delay = 600 + Math.random() * 800;
         break;
       case 'fascics':
         this.synthesizeFasciculation();
@@ -178,7 +199,7 @@ class EMGAudioEngine {
         break;
       case 'crd':
         this.synthesizeCRD();
-        delay = 22; // ~45 Hz continuous ephaptic buzzing
+        delay = 20; // ~50 Hz continuous ephaptic buzzing
         break;
       case 'normal':
       default:
@@ -325,6 +346,92 @@ class EMGAudioEngine {
     this.recordWaveform('normal');
   }
 
+  synthesizeMyotonia() {
+    // Myotonic Discharge: Classic "Dive Bomber" or revving engine sound
+    // Waxing then waning frequency (from 150 Hz down to 35 Hz) and amplitude
+    if (!this.audioCtx) return;
+    const now = this.audioCtx.currentTime + 0.005;
+    const duration = 1.4; // 1.4 sec per revving dive-bomb dive
+    const osc = this.audioCtx.createOscillator();
+    const g = this.audioCtx.createGain();
+
+    osc.type = 'sawtooth';
+    // Frequency glide: starts high (~180 Hz), sweeps up slightly then dives down to 40 Hz
+    osc.frequency.setValueAtTime(140, now);
+    osc.frequency.exponentialRampToValueAtTime(260, now + 0.35); // rev up
+    osc.frequency.exponentialRampToValueAtTime(38, now + duration); // dive bomber down
+
+    // Amplitude waxing and waning
+    g.gain.setValueAtTime(0.01, now);
+    g.gain.linearRampToValueAtTime(0.9, now + 0.35);
+    g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    osc.connect(g);
+    g.connect(this.gainNode);
+    osc.start(now);
+    osc.stop(now + duration + 0.05);
+
+    this.recordWaveform('myotonia');
+  }
+
+  synthesizeNeuromyotonia() {
+    if (!this.audioCtx) return;
+    const now = this.audioCtx.currentTime + 0.005;
+    const osc = this.audioCtx.createOscillator();
+    const g = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220 + Math.random() * 40, now);
+    g.gain.setValueAtTime(0.4, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
+
+    osc.connect(g);
+    g.connect(this.gainNode);
+    osc.start(now);
+    osc.stop(now + 0.014);
+
+    this.recordWaveform('crd');
+  }
+
+  synthesizeCrampDischarge() {
+    if (!this.audioCtx) return;
+    const now = this.audioCtx.currentTime + 0.005;
+    const osc = this.audioCtx.createOscillator();
+    const g = this.audioCtx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(110 + Math.random() * 60, now);
+    g.gain.setValueAtTime(0.8, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+    osc.connect(g);
+    g.connect(this.gainNode);
+    osc.start(now);
+    osc.stop(now + 0.028);
+
+    this.recordWaveform('muap');
+  }
+
+  synthesizeInsertionalActivity() {
+    if (!this.audioCtx) return;
+    const now = this.audioCtx.currentTime + 0.005;
+    const count = 8;
+    for (let i = 0; i < count; i++) {
+      const t = now + i * 0.015;
+      const osc = this.audioCtx.createOscillator();
+      const g = this.audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(500 + Math.random() * 500, t);
+      g.gain.setValueAtTime(0.7, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.012);
+      osc.connect(g);
+      g.connect(this.gainNode);
+      osc.start(t);
+      osc.stop(t + 0.015);
+    }
+    this.recordWaveform('fib');
+  }
+
   recordWaveform(type) {
     this.waveHistory.push({
       type: type,
@@ -366,33 +473,47 @@ class EMGAudioEngine {
   // --- PHYSIOLOGICAL CLINICAL WAVEFORM CALCULATOR ---
   // Convention: Y is INVERTED on screen: Downward is POSITIVE (+), Upward is NEGATIVE (-)
   getPhysiologicalWaveform(type, t) {
-    // t is normalized relative time across the wave duration (-1 to 1, 0 is trigger point)
+    // t: normalized time around potential center (-1 to 1)
     let y = 0;
     switch (type) {
       case 'fib': {
-        // Fibrillation: 1-5 ms, 20-200 uV
-        // Initial small positive (downward +), sharp negative peak (upward -), terminal positive (downward +)
-        if (t >= -0.3 && t <= 0.7) {
-          const p = (t + 0.3) / 1.0;
-          if (p < 0.25) {
-            y = Math.sin((p / 0.25) * Math.PI) * 18; // Positive initial phase (downward)
-          } else if (p < 0.65) {
-            y = -Math.sin(((p - 0.25) / 0.4) * Math.PI) * 58; // Sharp negative spike (upward)
+        // Fibrillation Potential (Perotto / Preston & Shapiro):
+        // Very brief spike (1-3 ms), high frequency.
+        // 1. Initial positive (downward) deflection: small, rapid (approx 0.5 ms).
+        // 2. Main negative (upward) spike: very high, razor-sharp peak (approx 1 ms).
+        // 3. Terminal positive (downward) return: small, rapid recovery to baseline.
+        if (t >= -0.4 && t <= 0.6) {
+          if (t < -0.1) {
+            // Initial downward positive phase
+            const p = (t + 0.4) / 0.3; // 0 to 1
+            y = Math.sin(p * Math.PI) * 22; // Downward (+)
+          } else if (t < 0.25) {
+            // Razor-sharp negative upward spike
+            const p = (t + 0.1) / 0.35; // 0 to 1
+            y = -Math.sin(p * Math.PI) * 82; // Upward (-)
           } else {
-            y = Math.sin(((p - 0.65) / 0.35) * Math.PI) * 14; // Terminal positive (downward)
+            // Terminal positive downward phase
+            const p = (t - 0.25) / 0.35; // 0 to 1
+            y = Math.sin(p * Math.PI) * 16; // Downward (+)
           }
         }
         break;
       }
       case 'psw': {
-        // Positive Sharp Wave: 10-30 ms, 20-200 uV
-        // Rapid steep downward deflection (Positive), followed by prolonged low-voltage negative plateau (Upward)
-        if (t >= 0 && t <= 1.2) {
-          if (t < 0.15) {
-            y = (t / 0.15) * 65; // Rapid steep positive drop (downward)
+        // Positive Sharp Wave (PSW) (Perotto / Preston & Shapiro):
+        // Distinctive asymmetric waveform:
+        // 1. Initial phase: Instantaneous, steep, high-amplitude downward deflection (Positive drop).
+        // 2. Second phase: Smooth, prolonged, low-voltage negative (upward) wave that gently decays back to baseline (10-30 ms).
+        if (t >= -0.1 && t <= 1.4) {
+          if (t < 0.1) {
+            // Extremely steep sharp positive drop (instantaneous spike downward)
+            const p = (t + 0.1) / 0.2; // 0 to 1
+            y = Math.sin(p * (Math.PI / 2)) * 75; // Sharp plunge downward (+)
           } else {
-            const decay = (t - 0.15) / 1.05;
-            y = 65 * Math.exp(-decay * 3.5) - Math.sin(decay * Math.PI) * 16;
+            // Prolonged low-voltage negative upward recovery phase
+            const p = (t - 0.1) / 1.3; // 0 to 1
+            // Starts from peak positive (downward), crosses baseline into upward negative deflection, then slowly decays
+            y = 75 * Math.exp(-p * 3.8) - Math.sin(p * Math.PI) * 28;
           }
         }
         break;
@@ -552,10 +673,25 @@ class EMGAudioEngine {
       else if (this.currentMode === 'crd') waveType = 'crd';
       else if (this.currentMode === 'normal_insertional') waveType = 'crd';
 
-      // Repeat potentials at true clinical firing frequencies across the screen
-      const cycleWidth = w / 3.2; // ~3 potentials visible per screen
+      // Repeat potentials at true clinical firing frequencies and durations
+      let cycleWidth = w / 3.0;
+      let widthFactor = 0.28;
+
+      if (waveType === 'fib') {
+        // Fibrillation: brief spike (1-3 ms), narrow width on 100ms sweep screen (~3% of screen width)
+        cycleWidth = w / 4.2;
+        widthFactor = 0.08;
+      } else if (waveType === 'psw') {
+        // Positive Sharp Wave: broad wave (10-30 ms), wider deflection across screen (~20% of screen width)
+        cycleWidth = w / 2.6;
+        widthFactor = 0.24;
+      } else if (waveType === 'myotonia') {
+        cycleWidth = w / 7.0; // High frequency rapid volleys
+        widthFactor = 0.45;
+      }
+
       const modX = ((x + now * 0.08) % cycleWidth) - cycleWidth * 0.5;
-      const normalizedT = modX / (cycleWidth * 0.28);
+      const normalizedT = modX / (cycleWidth * widthFactor);
 
       const deflection = this.getPhysiologicalWaveform(waveType, normalizedT) * audioMod;
       y += deflection;
