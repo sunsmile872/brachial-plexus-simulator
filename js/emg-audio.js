@@ -74,14 +74,14 @@ class EMGAudioEngine {
       // Create audio element for real recording playback
       this.audioElement = new Audio();
       this.audioElement.loop = true;
-      this.audioElement.crossOrigin = 'anonymous';
+      this.audioElement.volume = this.volume;
 
-      // Connect HTMLAudio to Web Audio API graph
+      // Safe MediaElementSource connection with fallback
       try {
         this.mediaSourceNode = this.audioCtx.createMediaElementSource(this.audioElement);
         this.mediaSourceNode.connect(this.gainNode);
       } catch (e) {
-        console.warn('MediaElementSource initialization:', e);
+        console.warn('Direct HTMLAudio playback without MediaElementSource:', e);
       }
     }
     if (this.audioCtx.state === 'suspended') {
@@ -120,6 +120,10 @@ class EMGAudioEngine {
     this.initAudio();
     this.isPlaying = true;
 
+    if (this.audioCtx && this.audioCtx.state === 'suspended') {
+      this.audioCtx.resume();
+    }
+
     const audioSrc = this.audioManifest[this.currentMode];
     if (this.playbackMode === 'real' && audioSrc) {
       // Real Clinical Recording Mode
@@ -127,12 +131,20 @@ class EMGAudioEngine {
         clearTimeout(this.timerId);
         this.timerId = null;
       }
-      this.audioElement.src = audioSrc;
-      this.audioElement.currentTime = 0;
-      this.audioElement.play().catch(e => {
-        console.warn('Real audio playback fallback to synthesis:', e);
+      if (this.audioElement) {
+        this.audioElement.src = audioSrc;
+        this.audioElement.currentTime = 0;
+        this.audioElement.volume = this.volume;
+        const playPromise = this.audioElement.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.warn('Real audio playback failed, falling back to procedural synth:', e);
+            this.scheduleNextDischarge();
+          });
+        }
+      } else {
         this.scheduleNextDischarge();
-      });
+      }
     } else {
       // Procedural Synthesis Mode
       if (this.audioElement) {
