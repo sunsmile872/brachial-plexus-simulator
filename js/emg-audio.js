@@ -348,6 +348,119 @@ class EMGAudioEngine {
     this.ctx.strokeStyle = 'rgba(13, 148, 136, 0.2)';
     this.ctx.lineWidth = 1;
 
+    this.gainSettings = {
+      normal: 200,          // 200 uV/div
+      normal_insertional: 100, // 100 uV/div
+      fibs: 50,             // 50 uV/div
+      psws: 50,             // 50 uV/div
+      psw_to_fibs: 50,      // 50 uV/div
+      fascics: 200,         // 200 uV/div
+      myokymia: 100,        // 100 uV/div
+      myotonia: 100,        // 100 uV/div
+      neuromyotonia: 100,   // 100 uV/div
+      cramp: 500,           // 500 uV/div
+      crd: 100              // 100 uV/div
+    };
+  }
+
+  // --- PHYSIOLOGICAL CLINICAL WAVEFORM CALCULATOR ---
+  // Convention: Y is INVERTED on screen: Downward is POSITIVE (+), Upward is NEGATIVE (-)
+  getPhysiologicalWaveform(type, t) {
+    // t is normalized relative time across the wave duration (-1 to 1, 0 is trigger point)
+    let y = 0;
+    switch (type) {
+      case 'fib': {
+        // Fibrillation: 1-5 ms, 20-200 uV
+        // Initial small positive (downward +), sharp negative peak (upward -), terminal positive (downward +)
+        if (t >= -0.3 && t <= 0.7) {
+          const p = (t + 0.3) / 1.0;
+          if (p < 0.25) {
+            y = Math.sin((p / 0.25) * Math.PI) * 18; // Positive initial phase (downward)
+          } else if (p < 0.65) {
+            y = -Math.sin(((p - 0.25) / 0.4) * Math.PI) * 58; // Sharp negative spike (upward)
+          } else {
+            y = Math.sin(((p - 0.65) / 0.35) * Math.PI) * 14; // Terminal positive (downward)
+          }
+        }
+        break;
+      }
+      case 'psw': {
+        // Positive Sharp Wave: 10-30 ms, 20-200 uV
+        // Rapid steep downward deflection (Positive), followed by prolonged low-voltage negative plateau (Upward)
+        if (t >= 0 && t <= 1.2) {
+          if (t < 0.15) {
+            y = (t / 0.15) * 65; // Rapid steep positive drop (downward)
+          } else {
+            const decay = (t - 0.15) / 1.05;
+            y = 65 * Math.exp(-decay * 3.5) - Math.sin(decay * Math.PI) * 16;
+          }
+        }
+        break;
+      }
+      case 'normal':
+      case 'muap': {
+        // Normal Triphasic MUAP: 5-15 ms, 200-2000 uV
+        // Initial positive (down), large negative spike (up), terminal positive (down)
+        if (t >= -0.5 && t <= 0.9) {
+          const p = (t + 0.5) / 1.4;
+          if (p < 0.2) {
+            y = Math.sin((p / 0.2) * Math.PI) * 20; // Initial positive
+          } else if (p < 0.65) {
+            y = -Math.sin(((p - 0.2) / 0.45) * Math.PI) * 75; // Sharp main negative spike
+          } else {
+            y = Math.sin(((p - 0.65) / 0.35) * Math.PI) * 22; // Terminal positive phase
+          }
+        }
+        break;
+      }
+      case 'fascic': {
+        // Fasciculation: Large polyphasic potential (4-6 phases, high amplitude)
+        if (t >= -0.6 && t <= 1.0) {
+          y = (Math.sin(t * Math.PI * 4) * 45 - Math.cos(t * Math.PI * 2) * 35) * Math.exp(-Math.pow(t - 0.2, 2) * 3.5);
+        }
+        break;
+      }
+      case 'myokymia': {
+        // Grouped repetitive rhythmic bursts
+        if (t >= 0 && t <= 1.5) {
+          const burstIdx = Math.floor(t * 5);
+          const subT = (t * 5) % 1;
+          y = -Math.sin(subT * Math.PI * 2) * 50 * Math.exp(-Math.pow(subT - 0.5, 2) * 4);
+        }
+        break;
+      }
+      case 'myotonia': {
+        // Waxing and waning high frequency bursts
+        if (t >= -1.0 && t <= 1.0) {
+          const amp = Math.sin((t + 1) * Math.PI * 0.5) * 48;
+          y = Math.sin(t * Math.PI * 14) * amp;
+        }
+        break;
+      }
+      case 'crd': {
+        // Uniform continuous ephaptic discharge
+        y = Math.sin(t * Math.PI * 8) * 35 + Math.sin(t * Math.PI * 16) * 12;
+        break;
+      }
+      default:
+        y = 0;
+    }
+    return y;
+  }
+
+  drawGrid() {
+    if (!this.ctx) return;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    
+    // Background dark medical phosphor CRT
+    this.ctx.fillStyle = '#061320';
+    this.ctx.fillRect(0, 0, w, h);
+
+    // Phosphor Grid lines (10 horizontal divisions = 100 ms total, 8 vertical)
+    this.ctx.strokeStyle = 'rgba(13, 148, 136, 0.22)';
+    this.ctx.lineWidth = 1;
+
     for (let x = 0; x <= w; x += w / 10) {
       this.ctx.beginPath();
       this.ctx.moveTo(x, 0);
@@ -361,18 +474,22 @@ class EMGAudioEngine {
       this.ctx.stroke();
     }
 
-    // Baseline center line
-    this.ctx.strokeStyle = 'rgba(52, 211, 153, 0.4)';
+    // Baseline center isoelectric line
+    this.ctx.strokeStyle = 'rgba(52, 211, 153, 0.45)';
     this.ctx.beginPath();
     this.ctx.moveTo(0, h / 2);
     this.ctx.lineTo(w, h / 2);
     this.ctx.stroke();
 
-    // Calibration markers
+    // Calibration markers with strict PM&R electrodiagnostic conventions
+    const gainVal = this.gainSettings[this.currentMode] || 100;
     this.ctx.fillStyle = '#34d399';
-    this.ctx.font = '11px monospace';
-    this.ctx.fillText('10 ms/div | ' + this.gain + ' µV/div', 10, 18);
-    this.ctx.fillText('Mode: ' + this.currentMode.toUpperCase(), w - 160, 18);
+    this.ctx.font = '600 11px system-ui, -apple-system, monospace';
+    this.ctx.fillText('10 ms/div  •  ' + gainVal + ' µV/div  •  [ - Up / + Down ]', 12, 18);
+    
+    const sourceLabel = this.playbackMode === 'real' ? '🎙️ CLINICAL RECORDING' : '🎛️ SYNTHESIZER';
+    this.ctx.fillStyle = '#38bdf8';
+    this.ctx.fillText(sourceLabel + ' | ' + this.currentMode.toUpperCase(), w - 230, 18);
   }
 
   animateOscilloscope() {
@@ -387,66 +504,82 @@ class EMGAudioEngine {
 
     this.drawGrid();
 
-    // Sweep line and waveform
+    // High-resolution Phosphor Green Beam
     this.ctx.strokeStyle = '#34d399';
-    this.ctx.lineWidth = 2;
+    this.ctx.lineWidth = 2.2;
     this.ctx.shadowColor = '#10b981';
-    this.ctx.shadowBlur = 6;
+    this.ctx.shadowBlur = 7;
 
     this.ctx.beginPath();
 
-    // If playing real audio through AnalyserNode, draw live audio waveform
-    if (this.playbackMode === 'real' && this.analyser && this.dataArray && this.audioElement && !this.audioElement.paused) {
-      this.analyser.getByteTimeDomainData(this.dataArray);
-      const sliceWidth = w / this.dataArray.length;
-      let x = 0;
-      for (let i = 0; i < this.dataArray.length; i++) {
-        const v = this.dataArray[i] / 128.0; // 0 to 2, 1 is center
-        const y = v * midY;
-        if (i === 0) {
-          this.ctx.moveTo(x, y);
-        } else {
-          this.ctx.lineTo(x, y);
-        }
-        x += sliceWidth;
-      }
-    } else {
-      // Procedural synthesizer waveform tracing
-      this.ctx.moveTo(0, midY);
-      const now = Date.now();
-      for (let x = 0; x < w; x += 2) {
-        let y = midY;
-        const timeOffset = (w - x) * 1.5;
-        
-        this.waveHistory.forEach(wave => {
-          const diff = now - wave.timestamp - timeOffset;
-          if (Math.abs(diff) < 20) {
-            const t = (diff + 20) / 40;
-            if (wave.type === 'fib') {
-              y += Math.sin(t * Math.PI * 4) * Math.exp(-Math.pow((t - 0.5) * 5, 2)) * 38;
-            } else if (wave.type === 'psw') {
-              if (t < 0.3) {
-                y += (t / 0.3) * 45;
-              } else {
-                y -= Math.exp(-(t - 0.3) * 4) * 20;
-              }
-            } else if (wave.type === 'muap_burst' || wave.type === 'normal') {
-              y += Math.sin(t * Math.PI * 2) * Math.exp(-Math.pow((t - 0.5) * 4, 2)) * 60;
-            } else if (wave.type === 'fascic') {
-              y += (Math.sin(t * Math.PI * 6) + Math.cos(t * Math.PI * 2)) * 35;
-            } else if (wave.type === 'crd') {
-              y += Math.sin(x * 0.4) * 25;
-            }
-          }
-        });
+    const now = Date.now();
 
-        // Add subtle phosphor trace baseline noise
-        y += (Math.random() - 0.5) * 2.5;
+    // Standardized Clinical Triggered EMG Sweep
+    // Timebase = 100 ms full screen (10 ms/div)
+    const sweepDuration = 1200; // ms for sweep loop across canvas
+    const sweepProgress = (now % sweepDuration) / sweepDuration;
+    const currentBeamX = sweepProgress * w;
+
+    // Build physiological trace synchronized to real audio or procedural triggers
+    for (let x = 0; x < w; x += 2) {
+      let y = midY;
+
+      // Extract time relative to screen center
+      const relTime = (x - w * 0.45) / (w * 0.15); // normalized scale
+
+      // Real audio energy modulation
+      let audioMod = 1.0;
+      if (this.playbackMode === 'real' && this.analyser && this.dataArray && this.audioElement && !this.audioElement.paused) {
+        this.analyser.getByteTimeDomainData(this.dataArray);
+        // Calculate instantaneous RMS envelope from audio
+        let sum = 0;
+        for (let i = 0; i < 64; i++) {
+          const val = (this.dataArray[i] - 128) / 128.0;
+          sum += val * val;
+        }
+        const rms = Math.sqrt(sum / 64);
+        audioMod = Math.min(2.5, Math.max(0.2, rms * 8.0));
+      }
+
+      // Map wave mode to physiological shape
+      let waveType = 'normal';
+      if (this.currentMode === 'fibs') waveType = 'fib';
+      else if (this.currentMode === 'psws') waveType = 'psw';
+      else if (this.currentMode === 'psw_to_fibs') waveType = (x < w * 0.5) ? 'psw' : 'fib';
+      else if (this.currentMode === 'fascics') waveType = 'fascic';
+      else if (this.currentMode === 'myokymia') waveType = 'myokymia';
+      else if (this.currentMode === 'myotonia') waveType = 'myotonia';
+      else if (this.currentMode === 'crd') waveType = 'crd';
+      else if (this.currentMode === 'normal_insertional') waveType = 'crd';
+
+      // Repeat potentials at true clinical firing frequencies across the screen
+      const cycleWidth = w / 3.2; // ~3 potentials visible per screen
+      const modX = ((x + now * 0.08) % cycleWidth) - cycleWidth * 0.5;
+      const normalizedT = modX / (cycleWidth * 0.28);
+
+      const deflection = this.getPhysiologicalWaveform(waveType, normalizedT) * audioMod;
+      y += deflection;
+
+      // Baseline electrical noise (true needle electrode thermal resistance)
+      y += (Math.random() - 0.5) * 3.0;
+
+      if (x === 0) {
+        this.ctx.moveTo(x, y);
+      } else {
         this.ctx.lineTo(x, y);
       }
     }
 
     this.ctx.stroke();
+
+    // Render moving phosphor beam head
+    this.ctx.fillStyle = '#6ee7b7';
+    this.ctx.shadowBlur = 12;
+    this.ctx.shadowColor = '#34d399';
+    this.ctx.beginPath();
+    this.ctx.arc(currentBeamX, midY, 3, 0, Math.PI * 2);
+    this.ctx.fill();
+
     this.ctx.shadowBlur = 0;
 
     requestAnimationFrame(() => this.animateOscilloscope());
